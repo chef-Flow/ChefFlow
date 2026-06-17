@@ -251,16 +251,19 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-brand-700 text-brand-300 text-center text-sm">
-        <div className="flex justify-center items-center gap-2 mb-2">
+      <footer className="py-10 px-4 bg-brand-700 text-brand-300 text-center text-sm">
+        <div className="flex justify-center items-center gap-2 mb-4">
           <AppLogo size={18} />
           <span className="font-bold text-white">ChefFlow</span>
         </div>
-        <p>© 2025 ChefFlow · Todos los derechos reservados</p>
-        <div className="flex justify-center gap-6 mt-3 text-brand-400">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 text-brand-400">
           <Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link>
           <Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link>
+          <Link href="/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
+          <Link href="/terminos" className="hover:text-white transition-colors">Términos</Link>
+          <Link href="/cumplimiento" className="hover:text-white transition-colors">Cumplimiento</Link>
         </div>
+        <p>© 2025 ChefFlow · Todos los derechos reservados · Guadalajara, México</p>
       </footer>
 
     </div>

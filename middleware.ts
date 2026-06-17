@@ -30,7 +30,11 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/registro')
-  const isPublicRoute = request.nextUrl.pathname === '/'
+  const isPublicRoute =
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname.startsWith('/privacidad') ||
+    request.nextUrl.pathname.startsWith('/terminos') ||
+    request.nextUrl.pathname.startsWith('/cumplimiento')
 
   if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone()
