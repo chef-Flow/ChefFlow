@@ -2,13 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { signUpSchema } from '@/lib/validations'
 
 export async function signUpWithTerminos(
   email: string,
   password: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = signUpSchema.safeParse({ email, password })
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  })
 
   if (error) return { ok: false, error: error.message }
   if (!data.user) return { ok: false, error: 'No se pudo crear la cuenta.' }

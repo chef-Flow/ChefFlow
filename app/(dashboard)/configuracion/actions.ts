@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
+import { profileParamsSchema, plataformaSchema, uuidSchema } from '@/lib/validations'
 import type { PlataformaDelivery } from '@/types'
 
 export async function saveProfileParams(
@@ -9,13 +11,16 @@ export async function saveProfileParams(
   margen_minimo: number,
   comision_bancaria: number,
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = profileParamsSchema.safeParse({ iva_porcentaje, margen_minimo, comision_bancaria })
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { ok: false, error: 'No autenticado' }
 
   const { error } = await supabase
     .from('user_profiles')
-    .upsert({ id: user.id, iva_porcentaje, margen_minimo, comision_bancaria })
+    .upsert({ id: user.id, ...parsed.data })
     .eq('id', user.id)
 
   if (error) {
@@ -27,10 +32,18 @@ export async function saveProfileParams(
   return { ok: true }
 }
 
+const arrayFieldSchema = z.object({
+  field: z.enum(['unidades_personalizadas', 'presentaciones_personalizadas']),
+  value: z.array(z.string().max(100)).max(200),
+})
+
 export async function saveArrayField(
   field: 'unidades_personalizadas' | 'presentaciones_personalizadas',
   value: string[],
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = arrayFieldSchema.safeParse({ field, value })
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
 
@@ -40,7 +53,7 @@ export async function saveArrayField(
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .update({ [field]: value })
+    .update({ [parsed.data.field]: parsed.data.value })
     .eq('id', user.id)
     .select('id')
 
@@ -54,17 +67,15 @@ export async function saveArrayField(
     return { ok: true }
   }
 
-  // Fila no existe aún — insertar
   const { error: insertErr } = await supabase
     .from('user_profiles')
-    .insert({ id: user.id, [field]: value })
+    .insert({ id: user.id, [parsed.data.field]: parsed.data.value })
 
   if (insertErr) {
-    // Si ya existe (race condition), intentar update de nuevo
     if (insertErr.code === '23505') {
       const { error: retryErr } = await supabase
         .from('user_profiles')
-        .update({ [field]: value })
+        .update({ [parsed.data.field]: parsed.data.value })
         .eq('id', user.id)
       if (retryErr) {
         console.error(`[saveArrayField action] retry UPDATE error:`, retryErr)
@@ -85,13 +96,16 @@ export async function insertPlataforma(
   nombre: string,
   comision_porcentaje: number,
 ): Promise<{ data: PlataformaDelivery | null; error?: string }> {
+  const parsed = plataformaSchema.safeParse({ nombre, comision_porcentaje })
+  if (!parsed.success) return { data: null, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { data: null, error: 'No autenticado' }
 
   const { data, error } = await supabase
     .from('plataformas_delivery')
-    .insert({ user_id: user.id, nombre, comision_porcentaje })
+    .insert({ user_id: user.id, ...parsed.data })
     .select()
     .single()
 
@@ -108,14 +122,20 @@ export async function updatePlataforma(
   nombre: string,
   comision_porcentaje: number,
 ): Promise<{ data: PlataformaDelivery | null; error?: string }> {
+  const idParsed = uuidSchema.safeParse(id)
+  if (!idParsed.success) return { data: null, error: 'ID inválido' }
+
+  const parsed = plataformaSchema.safeParse({ nombre, comision_porcentaje })
+  if (!parsed.success) return { data: null, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { data: null, error: 'No autenticado' }
 
   const { data, error } = await supabase
     .from('plataformas_delivery')
-    .update({ nombre, comision_porcentaje })
-    .eq('id', id)
+    .update(parsed.data)
+    .eq('id', idParsed.data)
     .eq('user_id', user.id)
     .select()
     .single()
@@ -132,14 +152,17 @@ export async function togglePlataforma(
   id: string,
   activa: boolean,
 ): Promise<{ ok: boolean; error?: string }> {
+  const idParsed = uuidSchema.safeParse(id)
+  if (!idParsed.success) return { ok: false, error: 'ID inválido' }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { ok: false, error: 'No autenticado' }
 
   const { error } = await supabase
     .from('plataformas_delivery')
-    .update({ activa })
-    .eq('id', id)
+    .update({ activa: Boolean(activa) })
+    .eq('id', idParsed.data)
     .eq('user_id', user.id)
 
   if (error) {
@@ -153,6 +176,9 @@ export async function togglePlataforma(
 export async function deletePlataforma(
   id: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const idParsed = uuidSchema.safeParse(id)
+  if (!idParsed.success) return { ok: false, error: 'ID inválido' }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { ok: false, error: 'No autenticado' }
@@ -160,7 +186,7 @@ export async function deletePlataforma(
   const { error } = await supabase
     .from('plataformas_delivery')
     .delete()
-    .eq('id', id)
+    .eq('id', idParsed.data)
     .eq('user_id', user.id)
 
   if (error) {

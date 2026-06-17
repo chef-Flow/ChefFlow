@@ -47,6 +47,8 @@ export default function PrintModal({
   const fmt = (v: number) =>
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v)
   const pct = (v: number) => `${v.toFixed(1)}%`
+  const esc = (s: string | null | undefined) =>
+    (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
   const handlePrint = () => {
     const printDiv = document.createElement('div')
@@ -99,22 +101,23 @@ export default function PrintModal({
 
     const rowsHTML = rows.map((r, i) => {
       const bg = i % 2 === 1 ? 'background:#f8fafc;' : ''
+      const u = esc(r.unidad)
       return `<tr style="${bg}">
-        <td style="${td}font-weight:500;">${r.nombre}</td>
-        ${inclProveedores ? `<td style="${td}color:#64748b;">${r.proveedor ?? '—'}</td>` : ''}
-        <td style="${tdR}">${r.cantidad_neta} ${r.unidad}</td>
-        <td style="${tdR}">${r.peso_merma} ${r.unidad}</td>
-        <td style="${tdR}">${r.cantidad_bruta.toFixed(3)} ${r.unidad}</td>
+        <td style="${td}font-weight:500;">${esc(r.nombre)}</td>
+        ${inclProveedores ? `<td style="${td}color:#64748b;">${r.proveedor ? esc(r.proveedor) : '—'}</td>` : ''}
+        <td style="${tdR}">${r.cantidad_neta} ${u}</td>
+        <td style="${tdR}">${r.peso_merma} ${u}</td>
+        <td style="${tdR}">${r.cantidad_bruta.toFixed(3)} ${u}</td>
         <td style="${tdR}">${pct(r.porcentaje_merma)}</td>
-        ${inclPrecios ? `<td style="${tdR}color:#64748b;">${fmt(r.precio_unitario)}/${r.unidad}</td>` : ''}
+        ${inclPrecios ? `<td style="${tdR}color:#64748b;">${fmt(r.precio_unitario)}/${u}</td>` : ''}
         ${inclPrecios ? `<td style="${tdR}font-weight:700;color:#c2410c;">${fmt(r.costo)}</td>` : ''}
       </tr>`
     }).join('')
 
     const fotoHTML = inclFoto && fotoUrl ? `
-      <img src="${fotoUrl.split('?')[0]}"
+      <img src="${esc(fotoUrl.split('?')[0])}"
         style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;"
-        alt="${recetaNombre}" />` : ''
+        alt="${esc(recetaNombre)}" />` : ''
 
     const margenHTML = margen && inclPrecios ? `
       <div style="margin-top:20px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
@@ -129,7 +132,7 @@ export default function PrintModal({
             <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Costo por porción (${pct(margen.costosPct)})</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(costoPorcion)}</td></tr>
             <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Margen bruto</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.margenPesos)}</td></tr>
             ${margen.pctBancaria ? `<tr><td style="font-size:12px;color:#475569;padding:3px 0;">Comisión bancaria (${pct(margen.pctBancaria || 0)})</td><td style="font-size:12px;text-align:right;color:#dc2626;">−${fmt(margen.despuésBancaria || 0)}</td></tr>` : ''}
-            ${margen.pctDelivery ? `<tr><td style="font-size:12px;color:#475569;padding:3px 0;">${margen.plataformaNombre || 'Delivery'} (${pct(margen.pctDelivery || 0)})</td><td style="font-size:12px;text-align:right;color:#dc2626;">−${fmt(margen.despuésDelivery || 0)}</td></tr>` : ''}
+            ${margen.pctDelivery ? `<tr><td style="font-size:12px;color:#475569;padding:3px 0;">${esc(margen.plataformaNombre) || 'Delivery'} (${pct(margen.pctDelivery || 0)})</td><td style="font-size:12px;text-align:right;color:#dc2626;">−${fmt(margen.despuésDelivery || 0)}</td></tr>` : ''}
             <tr style="border-top:2px solid #e2e8f0;">
               <td style="font-size:13px;font-weight:700;color:#1e293b;padding:6px 0 3px;">% Margen</td>
               <td style="font-size:13px;font-weight:700;text-align:right;color:#1e293b;">${pct(margen.margenPct)}</td>
@@ -145,7 +148,7 @@ export default function PrintModal({
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:3px solid #ea580c;margin-bottom:18px;">
           <div style="flex:1;">
             <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#ea580c;margin-bottom:4px;">ChefFlow · Costeo de Receta</div>
-            <h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#0f172a;">${recetaNombre}</h1>
+            <h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#0f172a;">${esc(recetaNombre)}</h1>
             <div style="font-size:12px;color:#64748b;">${porciones} porción${porciones !== 1 ? 'es' : ''} &nbsp;·&nbsp; Actualizado: ${fecha}</div>
           </div>
           ${fotoHTML}
@@ -190,7 +193,7 @@ export default function PrintModal({
             <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">Notas de la receta</span>
           </div>
           <div style="padding:12px 14px;">
-            <p style="font-size:12px;color:#334155;line-height:1.65;white-space:pre-wrap;margin:0;">${notas.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            <p style="font-size:12px;color:#334155;line-height:1.65;white-space:pre-wrap;margin:0;">${esc(notas)}</p>
           </div>
         </div>` : ''}
 

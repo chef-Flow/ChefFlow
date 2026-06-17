@@ -2,13 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { emailSchema, passwordSchema, nombreSchema } from '@/lib/validations'
 
 export async function actualizarNombre(
   nombre: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = nombreSchema.safeParse(nombre)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.updateUser({
-    data: { full_name: nombre.trim() },
+    data: { full_name: parsed.data },
   })
   if (error) return { ok: false, error: error.message }
   revalidatePath('/cuenta')
@@ -18,8 +22,11 @@ export async function actualizarNombre(
 export async function actualizarEmail(
   nuevoEmail: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = emailSchema.safeParse(nuevoEmail.trim())
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
-  const { error } = await supabase.auth.updateUser({ email: nuevoEmail.trim() })
+  const { error } = await supabase.auth.updateUser({ email: parsed.data })
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
@@ -27,10 +34,11 @@ export async function actualizarEmail(
 export async function actualizarContrasena(
   nuevaContrasena: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (nuevaContrasena.length < 6)
-    return { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' }
+  const parsed = passwordSchema.safeParse(nuevaContrasena)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message }
+
   const supabase = await createClient()
-  const { error } = await supabase.auth.updateUser({ password: nuevaContrasena })
+  const { error } = await supabase.auth.updateUser({ password: parsed.data })
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
