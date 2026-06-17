@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 
-export default function DashboardPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function DashboardPage() {
   redirect('/analisis')
 }
