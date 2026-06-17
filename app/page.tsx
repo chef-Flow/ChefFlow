@@ -129,10 +129,16 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-3 mb-8">
                 {[
-                  'Hasta 10 recetas',
-                  'Cálculo de costos básico',
-                  'Gestión de ingredientes',
-                  'Sin tarjeta de crédito',
+                  'Ingredientes ilimitados',
+                  '3 recetas máximo',
+                  '3 sub-recetas máximo',
+                  'Análisis de margen completo',
+                  'Margen de seguridad por receta',
+                  'PDF de tus 3 recetas',
+                  'Proveedores y comisión bancaria',
+                  'Plataformas de delivery',
+                  'IVA configurable',
+                  '1 colaborador solo lectura',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <CheckCircle2 size={15} className="text-brand-400 mt-0.5 flex-shrink-0" />
@@ -162,12 +168,17 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-3 mb-8">
                 {[
-                  'Recetas ilimitadas',
-                  'Sub-recetas y mermas',
-                  'Gestión de menús',
-                  'Análisis de márgenes',
+                  'Todo lo del plan Gratuito',
+                  'Recetas y sub-recetas ilimitadas',
+                  'Editar y eliminar todo',
+                  'Menús ilimitados',
                   'Foto del platillo',
-                  'Notas por receta',
+                  'PDF completo con opciones',
+                  'Exportar ingredientes por categoría',
+                  'Alertas de precios y fechas',
+                  'Margen mínimo por menú',
+                  'Unidades y presentaciones personalizadas',
+                  '1 colaborador solo lectura',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <CheckCircle2 size={15} className="text-brand-500 mt-0.5 flex-shrink-0" />
@@ -195,11 +206,12 @@ export default function LandingPage() {
               <ul className="space-y-3 mb-8">
                 {[
                   'Todo lo del plan Básico',
-                  'Colaboradores (tu equipo)',
-                  'Plataformas delivery',
-                  'Uber Eats, DiDi Food y más',
-                  'Exportar menús a PDF',
-                  'Soporte prioritario',
+                  'Colaboradores ilimitados',
+                  'Permisos de edición por colaborador',
+                  'Ajuste de precios masivo por menú',
+                  'Análisis comparativo entre menús',
+                  'Alertas de subida de precios',
+                  'Exportar a Excel',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <CheckCircle2 size={15} className="text-brand-500 mt-0.5 flex-shrink-0" />
