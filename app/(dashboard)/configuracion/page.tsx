@@ -35,8 +35,6 @@ export default async function ConfiguracionPage() {
     await supabase
       .from('user_profiles')
       .insert({ id: user.id })
-      .throwOnError()
-      .catch(() => {/* ya existe, ignorar */})
   }
 
   return (
