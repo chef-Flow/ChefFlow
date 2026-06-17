@@ -81,7 +81,9 @@ export async function middleware(request: NextRequest) {
     pathname === '/' ||
     pathname.startsWith('/privacidad') ||
     pathname.startsWith('/terminos') ||
-    pathname.startsWith('/cumplimiento')
+    pathname.startsWith('/cumplimiento') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password')
 
   if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone()

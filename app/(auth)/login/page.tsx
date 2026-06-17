@@ -145,7 +145,15 @@ function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center">
+      {!isSignUp && (
+        <div className="mt-4 text-center">
+          <a href="/forgot-password" className="text-sm text-slate-500 hover:text-slate-700">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
+      )}
+
+      <div className="mt-3 text-center">
         <button onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
           className="text-sm text-brand-600 hover:text-brand-700 font-medium">
           {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate gratis'}
