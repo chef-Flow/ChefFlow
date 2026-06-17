@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+}
+
+/* ─── Print styles ────────────────────────────────────────────────────────── */
+@media print {
+  body > *                  { display: none !important; }
+  #chefflow-print-root      { display: block !important; }
+
+  #chefflow-print-root      { font-family: Georgia, serif; color: #111; }
+  .print-header             { border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 16px; }
+  .print-section            { margin-bottom: 20px; }
+  .print-table              { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .print-table th           { border-bottom: 1px solid #555; text-align: left; padding: 4px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+  .print-table td           { border-bottom: 1px solid #ddd; padding: 5px 8px; }
+  .print-margin-box         { border: 1px solid #111; padding: 12px; margin-top: 16px; font-size: 13px; }
+  .print-margin-row         { display: flex; justify-content: space-between; padding: 2px 0; }
+  .print-margin-total       { border-top: 1px solid #111; margin-top: 4px; padding-top: 4px; font-weight: bold; }
+  .print-warning            { background: #fff3cd; border: 1px solid #ffc107; padding: 6px 10px; font-size: 11px; margin-top: 8px; }
+  .hide-prices .print-price { display: none !important; }
+  .hide-prov   .print-prov  { display: none !important; }
+}

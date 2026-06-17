@@ -1,0 +1,45 @@
+
+> chefflow-costeo@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 7.7s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1103ms (125 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 4.2s (460 modules)
+ ✓ Compiled in 438ms (234 modules)
+ GET / 307 in 4718ms
+ ○ Compiling /ingredientes ...
+ ✓ Compiled /ingredientes in 5.6s (754 modules)
+ GET /ingredientes 200 in 7224ms
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (101kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (231kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ✓ Compiled in 738ms (356 modules)
+ ✓ Compiled in 487ms (356 modules)
+ ✓ Compiled in 415ms (356 modules)
+ ✓ Compiled in 371ms (356 modules)
+ ✓ Compiled in 674ms (356 modules)
+ ✓ Compiled in 416ms (356 modules)
+ ✓ Compiled in 585ms (356 modules)
+ ✓ Compiled in 817ms (765 modules)
+ ✓ Compiled in 345ms (356 modules)
+ ✓ Compiled in 347ms (356 modules)
+ ✓ Compiled in 489ms (356 modules)
+ ✓ Compiled in 369ms (356 modules)
+ ✓ Compiled in 353ms (356 modules)
+ ✓ Compiled in 294ms (356 modules)
+ ✓ Compiled in 440ms (356 modules)
+ ✓ Compiled in 914ms (768 modules)
+ ✓ Compiled in 320ms (356 modules)
+ ✓ Compiled in 315ms (356 modules)
+ ✓ Compiled in 324ms (356 modules)
+ ✓ Compiled in 302ms (356 modules)
+ ✓ Compiled in 398ms (356 modules)
+ ✓ Compiled in 352ms (356 modules)
+ ✓ Compiled in 591ms (356 modules)
+[?25h
