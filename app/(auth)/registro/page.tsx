@@ -3,24 +3,25 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import AppLogo from '@/components/ui/AppLogo'
+import { signUpWithTerminos } from './actions'
 
 export default function RegistroPage() {
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [aceptaTerminos, setAceptaTerminos] = useState(false)
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState<string | null>(null)
   const [success, setSuccess]           = useState(false)
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!aceptaTerminos) return
     setError(null)
     setLoading(true)
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) setError(error.message)
+    const result = await signUpWithTerminos(email, password)
+    if (!result.ok) setError(result.error ?? 'Error al crear la cuenta.')
     else setSuccess(true)
     setLoading(false)
   }
@@ -94,8 +95,32 @@ export default function RegistroPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mt-2">
+            <label className="flex items-start gap-3 cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={aceptaTerminos}
+                onChange={e => setAceptaTerminos(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-brand-600 flex-shrink-0"
+                required
+              />
+              <span className="text-sm text-slate-600 leading-snug">
+                Acepto los{' '}
+                <Link href="/terminos" target="_blank" className="text-brand-600 hover:underline font-medium">
+                  Términos y Condiciones
+                </Link>
+                {' '}y la{' '}
+                <Link href="/privacidad" target="_blank" className="text-brand-600 hover:underline font-medium">
+                  Política de Privacidad
+                </Link>
+                {' '}de ChefFlow
+              </span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading || !aceptaTerminos}
+              className="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mt-2"
+            >
               {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
             </button>
           </form>
