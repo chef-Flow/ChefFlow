@@ -137,9 +137,8 @@ export default function PrivacidadPage() {
           </p>
           <div className="mt-2 p-4 bg-slate-50 rounded-xl text-sm">
             <p><strong>ChefFlow</strong></p>
-            <p>Correo: <a href="mailto:privacidad@chefflow.mx" className="text-brand-600 hover:underline">privacidad@chefflow.mx</a></p>
+            <p>Correo: <a href="mailto:chefflow9@gmail.com" className="text-brand-600 hover:underline">chefflow9@gmail.com</a></p>
             <p>Sitio web: chefflow.mx</p>
-            <p>Guadalajara, Jalisco, México</p>
           </div>
         </section>
 

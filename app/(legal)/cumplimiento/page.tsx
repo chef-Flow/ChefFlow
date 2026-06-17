@@ -143,9 +143,8 @@ export default function CumplimientoPage() {
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-3">11. Contacto</h2>
           <div className="p-4 bg-slate-50 rounded-xl text-sm">
-            <p><strong>Seguridad:</strong> <a href="mailto:seguridad@chefflow.mx" className="text-brand-600 hover:underline">seguridad@chefflow.mx</a></p>
-            <p><strong>Privacidad:</strong> <a href="mailto:privacidad@chefflow.mx" className="text-brand-600 hover:underline">privacidad@chefflow.mx</a></p>
-            <p><strong>General:</strong> <a href="mailto:hola@chefflow.mx" className="text-brand-600 hover:underline">hola@chefflow.mx</a></p>
+            <p>Correo: <a href="mailto:chefflow9@gmail.com" className="text-brand-600 hover:underline">chefflow9@gmail.com</a></p>
+            <p>Sitio web: chefflow.mx</p>
           </div>
         </section>
 
