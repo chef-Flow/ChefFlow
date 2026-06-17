@@ -190,7 +190,7 @@ export default function LandingPage() {
                 href="/registro"
                 className="block w-full text-center py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors text-sm shadow-sm"
               >
-                Empieza gratis
+                Empezar
               </Link>
             </div>
 
