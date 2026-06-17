@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code  = searchParams.get('code')
+  const type  = searchParams.get('type')
   const next  = searchParams.get('next') ?? '/analisis'
   const error = searchParams.get('error')
 
@@ -41,8 +42,13 @@ export async function GET(request: NextRequest) {
 
   if (exchangeError) {
     const url = new URL('/login', origin)
-    url.searchParams.set('error', 'No se pudo iniciar sesión con Google.')
+    url.searchParams.set('error', 'No se pudo iniciar sesión.')
     return NextResponse.redirect(url)
+  }
+
+  // Si es recuperación de contraseña, ir a reset-password
+  if (type === 'recovery') {
+    return NextResponse.redirect(new URL('/reset-password', origin))
   }
 
   // Destino seguro: solo rutas internas
