@@ -202,7 +202,7 @@ export default function MenuPrintModal({ isOpen, onClose, menu, rows }: Props) {
     const sections = selectedRows.map(row => {
       if (row.receta) {
         const r = row.receta
-        const data = itemsData.get(r.id) ?? { notas: null, ingredientes: [] }
+        const data = itemsData.get(r.id) ?? { notas: null, foto_url: null, ingredientes: [] }
         const ings = data.ingredientes
         const totalCosto = ings.reduce((s, i) => s + i.costo, 0)
 
