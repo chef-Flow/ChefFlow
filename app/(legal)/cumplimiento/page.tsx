@@ -104,7 +104,7 @@ export default function CumplimientoPage() {
           <div className="mt-3 p-4 bg-brand-50 border border-brand-200 rounded-xl">
             <p className="font-semibold text-brand-900">Contacto de seguridad</p>
             <p className="text-sm text-brand-700 mt-1">
-              Envíe su reporte a: <a href="mailto:seguridad@chefflow.mx" className="font-semibold hover:underline">seguridad@chefflow.mx</a>
+              Envíe su reporte a: <a href="mailto:chefflow9@gmail.com" className="font-semibold hover:underline">chefflow9@gmail.com</a>
             </p>
             <p className="text-sm text-brand-600 mt-1">Por favor incluya: descripción de la vulnerabilidad, pasos para reproducirla y el posible impacto.</p>
           </div>

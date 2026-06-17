@@ -13,7 +13,7 @@ export default function PrivacidadPage() {
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-3">1. Responsable del tratamiento</h2>
           <p>
-            ChefFlow (en adelante "ChefFlow", "nosotros" o "la empresa") es responsable del tratamiento de los datos personales que usted nos proporciona a través de la plataforma <strong>chefflow.mx</strong>. Para cualquier consulta relacionada con privacidad, puede contactarnos en <a href="mailto:privacidad@chefflow.mx" className="text-brand-600 hover:underline">privacidad@chefflow.mx</a>.
+            ChefFlow (en adelante "ChefFlow", "nosotros" o "la empresa") es responsable del tratamiento de los datos personales que usted nos proporciona a través de la plataforma <strong>chefflow.mx</strong>. Para cualquier consulta relacionada con privacidad, puede contactarnos en <a href="mailto:chefflow9@gmail.com" className="text-brand-600 hover:underline">chefflow9@gmail.com</a>.
           </p>
         </section>
 
@@ -98,7 +98,7 @@ export default function PrivacidadPage() {
             <li><strong>Limitación:</strong> solicitar la restricción del tratamiento (aplica GDPR).</li>
           </ul>
           <p className="mt-3">
-            Para ejercer cualquiera de estos derechos, envíe un correo a <a href="mailto:privacidad@chefflow.mx" className="text-brand-600 hover:underline">privacidad@chefflow.mx</a> con su nombre, correo de cuenta y descripción de la solicitud. Responderemos en un plazo máximo de 20 días hábiles (México) o 30 días (GDPR).
+            Para ejercer cualquiera de estos derechos, envíe un correo a <a href="mailto:chefflow9@gmail.com" className="text-brand-600 hover:underline">chefflow9@gmail.com</a> con su nombre, correo de cuenta y descripción de la solicitud. Responderemos en un plazo máximo de 20 días hábiles (México) o 30 días (GDPR).
           </p>
         </section>
 
