@@ -51,44 +51,36 @@ export default function PrintModal({
     (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
   const handlePrint = () => {
-    const printDiv = document.createElement('div')
-    printDiv.id = 'chefflow-print-root'
-    printDiv.innerHTML = buildHTML()
-    document.body.appendChild(printDiv)
-
-    const style = document.createElement('style')
-    style.id = 'chefflow-print-style'
-    style.textContent = `
-      @media print {
-        body > *:not(#chefflow-print-root) { display: none !important; }
-        #chefflow-print-root { display: block !important; }
-        @page { margin: 12mm 15mm; }
-      }
-    `
-    document.head.appendChild(style)
-
-    const cleanup = () => {
-      document.body.removeChild(printDiv)
-      document.head.removeChild(style)
+    const win = window.open('', '_blank')
+    if (!win) {
+      alert('Permite las ventanas emergentes en tu navegador para imprimir.')
+      return
     }
-
-    const img = printDiv.querySelector('img')
-    if (img) {
-      // Esperar a que la imagen cargue antes de imprimir
-      let done = false
-      const doPrint = () => {
-        if (done) return
-        done = true
-        window.print()
-        cleanup()
-      }
-      img.onload  = doPrint
-      img.onerror = doPrint          // imprimir igual si falla la carga
-      setTimeout(doPrint, 4000)      // fallback por si onload nunca dispara
-    } else {
-      window.print()
-      cleanup()
-    }
+    const content = buildHTML()
+    win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${esc(recetaNombre)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @media print { @page { margin: 12mm 15mm; } }
+    @media screen { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+${content}
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+    window.addEventListener('afterprint', function () { window.close(); });
+  });
+<\/script>
+</body>
+</html>`)
+    win.document.close()
   }
 
   const buildHTML = () => {

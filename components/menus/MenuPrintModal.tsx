@@ -309,48 +309,37 @@ export default function MenuPrintModal({ isOpen, onClose, menu, rows }: Props) {
   function handlePrint() {
     if (loading || selectedRows.length === 0) return
 
-    const printDiv = document.createElement('div')
-    printDiv.id = 'chefflow-menu-print-root'
-    printDiv.innerHTML = buildHTML()
-    document.body.appendChild(printDiv)
-
-    const style = document.createElement('style')
-    style.id = 'chefflow-menu-print-style'
-    style.textContent = `
-      @media print {
-        body > *:not(#chefflow-menu-print-root) { display: none !important; }
-        #chefflow-menu-print-root { display: block !important; }
-        @page { margin: 12mm 15mm; }
-      }
-    `
-    document.head.appendChild(style)
-
-    const cleanup = () => {
-      document.body.removeChild(printDiv)
-      document.head.removeChild(style)
-      onClose()
-    }
-
-    const imgs = Array.from(printDiv.querySelectorAll('img'))
-    if (imgs.length === 0) {
-      window.print()
-      cleanup()
+    const win = window.open('', '_blank')
+    if (!win) {
+      alert('Permite las ventanas emergentes en tu navegador para imprimir.')
       return
     }
-
-    let pending = imgs.length
-    const onDone = () => { if (--pending === 0) { window.print(); cleanup() } }
-    const timeout = setTimeout(() => { window.print(); cleanup() }, 5000)
-
-    imgs.forEach(img => {
-      if (img.complete) { onDone(); return }
-      img.onload  = () => { onDone() }
-      img.onerror = () => { onDone() }
-    })
-
-    // If all images were already complete, the timeout is still set —
-    // clearTimeout after print to avoid double cleanup
-    if (pending === 0) { clearTimeout(timeout) }
+    const content = buildHTML()
+    win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${esc(menu.nombre)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @media print { @page { margin: 12mm 15mm; } }
+    @media screen { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+${content}
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+    window.addEventListener('afterprint', function () { window.close(); });
+  });
+<\/script>
+</body>
+</html>`)
+    win.document.close()
+    onClose()
   }
 
   const toggle = (label: string, val: boolean, set: (v: boolean) => void, disabled?: boolean) => (
