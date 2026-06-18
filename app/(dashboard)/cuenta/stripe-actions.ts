@@ -11,9 +11,9 @@ export async function crearCheckoutSession(formData: FormData): Promise<never> {
   if (!user) redirect('/login')
 
   const planSolicitado = formData.get('plan') === 'basic' ? 'basic' : 'pro'
-  const PRICE_BASIC = process.env.STRIPE_PRICE_ID_BASIC || 'price_1TjZitlp7fRxZjDkcdYFw7k5'
-  const PRICE_PRO   = process.env.STRIPE_PRICE_ID_PRO   || 'price_1TjZhpIp7fRxZjDk6qIN3pJT'
-  const priceId = planSolicitado === 'basic' ? PRICE_BASIC : PRICE_PRO
+  const priceId = planSolicitado === 'basic'
+    ? process.env.STRIPE_PRICE_ID_BASIC!
+    : process.env.STRIPE_PRICE_ID_PRO!
 
   const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
