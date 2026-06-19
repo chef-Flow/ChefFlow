@@ -68,6 +68,27 @@ export default async function InvitacionPage({ searchParams }: Props) {
     .update({ colaborador_user_id: user.id, estado: 'activo' })
     .eq('id', colab.id)
 
+  // Crear permisos por defecto para todos los menús del propietario,
+  // así el colaborador ve contenido inmediatamente sin esperar a que el propietario asigne permisos.
+  const { data: propietarioMenus } = await admin
+    .from('menus')
+    .select('id')
+    .eq('user_id', colab.propietario_id)
+
+  if (propietarioMenus && propietarioMenus.length > 0) {
+    await admin.from('colaborador_menus').upsert(
+      propietarioMenus.map(m => ({
+        colaborador_id: colab.id,
+        menu_id: m.id,
+        puede_ver_recetas: true,
+        puede_ver_precios: false,
+        puede_ver_proveedores: false,
+        puede_editar: false,
+      })),
+      { onConflict: 'colaborador_id,menu_id' }
+    )
+  }
+
   redirect('/compartido')
 }
 

@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     await supabase
       .from('colaboradores')
       .update({ colaborador_user_id: user.id, estado: 'activo' })
-      .eq('email', user.email)
+      .eq('email', user.email.toLowerCase().trim())
       .eq('estado', 'pendiente')
   }
 

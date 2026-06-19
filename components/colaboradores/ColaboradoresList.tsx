@@ -5,6 +5,7 @@ import { Plus, Users, Mail, Trash2, UserX, Shield, Lock, Send } from 'lucide-rea
 import { createClient } from '@/lib/supabase/client'
 import Modal from '@/components/ui/Modal'
 import { invitarColaborador, reenviarInvitacion } from '@/app/(dashboard)/colaboradores/invite-actions'
+import { guardarPermisosColaborador } from '@/app/(dashboard)/colaboradores/actions'
 import type { Colaborador, Menu, ColaboradorMenu } from '@/types'
 
 interface ColabWithPerms extends Colaborador {
@@ -68,19 +69,17 @@ export default function ColaboradoresList({ initialColabs, menus, ownerPlan }: P
     if (!permsOpen) return
     setPermsSaving(true)
 
-    for (const perm of localPerms) {
-      const { menu_id, puede_ver_recetas, puede_ver_precios, puede_ver_proveedores, puede_editar } = perm
-      const payload = { colaborador_id: permsOpen.id, menu_id, puede_ver_recetas, puede_ver_precios, puede_ver_proveedores, puede_editar }
-      if (perm.id) {
-        await supabase.from('colaborador_menus').update(payload).eq('id', perm.id)
-      } else {
-        await supabase.from('colaborador_menus').upsert(payload, { onConflict: 'colaborador_id,menu_id' })
-      }
+    const result = await guardarPermisosColaborador(permsOpen.id, localPerms)
+
+    if (!result.ok) {
+      alert(result.error ?? 'No se pudieron guardar los permisos.')
+      setPermsSaving(false)
+      return
     }
 
-    // Refresh perms for this colab
-    const { data } = await supabase.from('colaborador_menus').select('*').eq('colaborador_id', permsOpen.id)
-    setColabs(cs => cs.map(c => c.id === permsOpen.id ? { ...c, permisos: (data as ColaboradorMenu[]) ?? [] } : c))
+    setColabs(cs => cs.map(c =>
+      c.id === permsOpen.id ? { ...c, permisos: result.permisos ?? [] } : c
+    ))
     setPermsSaving(false)
     setPermsOpen(null)
   }
