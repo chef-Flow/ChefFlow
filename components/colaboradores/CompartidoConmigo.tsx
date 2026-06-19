@@ -172,8 +172,8 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
         </button>
       </div>
 
-      {/* Print content (hidden id target) */}
-      <div id={`print-menu-${permiso.menuId}`}>
+      {/* Print content — invisible, only used by handlePrint */}
+      <div id={`print-menu-${permiso.menuId}`} className="hidden">
         <h1>{permiso.menu.nombre}</h1>
         {permiso.puedeVerRecetas && permiso.menu.recetas.length > 0 ? (
           <table>
@@ -212,9 +212,9 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
           Este menú no tiene recetas.
         </div>
       ) : (
-        <ul className="divide-y divide-slate-50">
+        <ul className="divide-y divide-slate-100">
           {permiso.menu.recetas.map(r => (
-            <li key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors">
+            <li key={r.id} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors">
               {/* Thumbnail + name — clickable to recipe detail */}
               <Link
                 href={`/compartido/receta/${r.id}`}
@@ -293,7 +293,7 @@ export default function CompartidoConmigo({ comparticiones }: Props) {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {allPermisos.map(p => (
             <MenuCard key={p.permisoId} permiso={p} />
           ))}
