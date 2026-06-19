@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { Share2, Printer, Eye, EyeOff, Pencil, Check, X, Loader2, ChefHat } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { actualizarPrecioCompartido } from '@/app/(dashboard)/colaboradores/actions'
 
 interface RecetaShared {
@@ -214,22 +215,26 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
         <ul className="divide-y divide-slate-50">
           {permiso.menu.recetas.map(r => (
             <li key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors">
-              {/* Thumbnail */}
-              <div className="w-10 h-10 rounded-lg bg-brand-50 flex-shrink-0 overflow-hidden">
-                {r.foto_url ? (
-                  <Image src={r.foto_url} alt={r.nombre} width={40} height={40} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ChefHat size={16} className="text-brand-200" />
-                  </div>
-                )}
-              </div>
+              {/* Thumbnail + name — clickable to recipe detail */}
+              <Link
+                href={`/compartido/receta/${r.id}`}
+                className="flex items-center gap-4 flex-1 min-w-0 group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-brand-50 flex-shrink-0 overflow-hidden">
+                  {r.foto_url ? (
+                    <Image src={r.foto_url} alt={r.nombre} width={40} height={40} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ChefHat size={16} className="text-brand-200" />
+                    </div>
+                  )}
+                </div>
 
-              {/* Name + portions */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate">{r.nombre}</p>
-                <p className="text-xs text-slate-400">{r.porciones} porción{r.porciones !== 1 ? 'es' : ''}</p>
-              </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{r.nombre}</p>
+                  <p className="text-xs text-slate-400">{r.porciones} porción{r.porciones !== 1 ? 'es' : ''}</p>
+                </div>
+              </Link>
 
               {/* Prices */}
               {permiso.puedeVerPrecios && (
