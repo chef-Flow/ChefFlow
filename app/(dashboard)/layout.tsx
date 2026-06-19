@@ -7,11 +7,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user?.email) {
-    await supabase
-      .from('colaboradores')
-      .update({ colaborador_user_id: user.id, estado: 'activo' })
-      .eq('email', user.email.toLowerCase().trim())
-      .eq('estado', 'pendiente')
+    const emailLower = user.email.toLowerCase().trim()
+    await Promise.all([
+      supabase
+        .from('colaboradores')
+        .update({ colaborador_user_id: user.id, estado: 'activo' })
+        .eq('email', emailLower)
+        .eq('estado', 'pendiente'),
+      supabase
+        .from('recetas_compartidas')
+        .update({ receptor_user_id: user.id, estado: 'activo' })
+        .eq('receptor_email', emailLower)
+        .eq('estado', 'pendiente'),
+    ])
   }
 
   return (

@@ -35,8 +35,25 @@ interface Comparticion {
   permisos: PermisoConMenu[]
 }
 
+interface RecetaDirecta {
+  shareId: string
+  recetaId: string
+  puedeVerPrecios: boolean
+  puedeVerProveedores: boolean
+  vista: boolean
+  receta: {
+    id: string
+    nombre: string
+    porciones: number
+    costo_por_porcion: number
+    precio_venta: number | null
+    foto_url: string | null
+  }
+}
+
 interface Props {
   comparticiones: Comparticion[]
+  recetasDirectas?: RecetaDirecta[]
 }
 
 const fmt = (v: number) =>
@@ -334,8 +351,10 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
   )
 }
 
-export default function CompartidoConmigo({ comparticiones }: Props) {
+export default function CompartidoConmigo({ comparticiones, recetasDirectas = [] }: Props) {
   const allPermisos = comparticiones.flatMap(c => c.permisos)
+  const nuevas = recetasDirectas.filter(r => !r.vista)
+  const isEmpty = allPermisos.length === 0 && recetasDirectas.length === 0
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -345,21 +364,99 @@ export default function CompartidoConmigo({ comparticiones }: Props) {
           <h1 className="text-2xl font-bold text-slate-900">Compartido conmigo</h1>
           <p className="text-sm text-slate-500 mt-0.5">Menús y recetas que otros chefs han compartido contigo</p>
         </div>
+        {nuevas.length > 0 && (
+          <span className="ml-auto flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-xs font-bold">
+            {nuevas.length}
+          </span>
+        )}
       </div>
 
-      {allPermisos.length === 0 ? (
+      {isEmpty ? (
         <div className="text-center py-20 bg-white rounded-xl border border-slate-200">
           <Share2 className="mx-auto mb-3 text-slate-200" size={52} />
-          <p className="text-slate-500 font-medium text-sm">Ningún menú compartido contigo aún.</p>
+          <p className="text-slate-500 font-medium text-sm">Nada compartido contigo aún.</p>
           <p className="text-slate-400 text-xs mt-1">
-            Cuando alguien te invite a un menú, aparecerá aquí.
+            Cuando alguien te comparta un menú o una receta, aparecerá aquí.
           </p>
         </div>
       ) : (
         <div className="space-y-6">
-          {allPermisos.map(p => (
-            <MenuCard key={p.permisoId} permiso={p} />
-          ))}
+
+          {/* ── Recetas individuales compartidas ── */}
+          {recetasDirectas.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                Recetas compartidas contigo
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <ul className="divide-y divide-slate-100">
+                  {recetasDirectas.map(({ shareId, receta, puedeVerPrecios, vista }) => (
+                    <li key={shareId} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors">
+                      <Link href={`/compartido/receta/${receta.id}`} className="flex items-center gap-4 flex-1 min-w-0 group">
+                        <div className="relative flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-brand-50 overflow-hidden">
+                            {receta.foto_url ? (
+                              <Image src={receta.foto_url} alt={receta.nombre} width={40} height={40} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ChefHat size={16} className="text-brand-200" />
+                              </div>
+                            )}
+                          </div>
+                          {!vista && (
+                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                              {receta.nombre}
+                            </p>
+                            {!vista && (
+                              <span className="flex-shrink-0 text-xs bg-indigo-100 text-indigo-600 font-semibold px-1.5 py-0.5 rounded-full">
+                                Nueva
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400">{receta.porciones} porción{receta.porciones !== 1 ? 'es' : ''}</p>
+                        </div>
+                      </Link>
+
+                      {puedeVerPrecios && (
+                        <div className="flex items-center gap-6 text-right flex-shrink-0">
+                          <div>
+                            <p className="text-xs text-slate-400">Costo/porción</p>
+                            <p className="text-sm text-slate-600">{fmt(receta.costo_por_porcion)}</p>
+                          </div>
+                          {receta.precio_venta != null && (
+                            <div>
+                              <p className="text-xs text-slate-400">Precio venta</p>
+                              <p className="text-sm font-medium text-slate-700">{fmt(receta.precio_venta)}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* ── Menús compartidos (colaboraciones) ── */}
+          {allPermisos.length > 0 && (
+            <div>
+              {recetasDirectas.length > 0 && (
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                  Menús compartidos
+                </p>
+              )}
+              {allPermisos.map(p => (
+                <MenuCard key={p.permisoId} permiso={p} />
+              ))}
+            </div>
+          )}
+
         </div>
       )}
     </div>

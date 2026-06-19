@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { marcarRecetaVista } from '@/app/(dashboard)/recetas/compartir-actions'
 
 function getAdmin() {
   return createAdminClient(
@@ -29,43 +30,64 @@ export default async function CompartidoRecetaPage({
   const admin = getAdmin()
 
   // ── 1. Verificar acceso ────────────────────────────────────────────────────
-  // Obtener colaboraciones activas del usuario
+  // Fuente A: share directo de receta
+  const { data: directShare } = await admin
+    .from('recetas_compartidas')
+    .select('id, puede_ver_precios, puede_ver_proveedores, vista')
+    .eq('receta_id', recetaId)
+    .eq('receptor_user_id', user.id)
+    .eq('estado', 'activo')
+    .single()
+
+  // Fuente B: acceso vía colaboración de menú
   const { data: colabs } = await admin
     .from('colaboradores')
     .select('id')
     .eq('colaborador_user_id', user.id)
     .eq('estado', 'activo')
 
-  if (!colabs?.length) redirect('/compartido')
+  const colabIds = (colabs ?? []).map(c => c.id)
 
-  const colabIds = colabs.map(c => c.id)
+  let colabPuedeVerPrecios     = false
+  let colabPuedeVerProveedores = false
+  let hasColabAccess           = false
 
-  // Obtener permisos de los menús que contienen esta receta
-  const { data: acceso } = await admin
-    .from('colaborador_menus')
-    .select('menu_id, puede_ver_recetas, puede_ver_precios, puede_ver_proveedores, puede_editar')
-    .in('colaborador_id', colabIds)
-    .eq('puede_ver_recetas', true)
+  if (colabIds.length) {
+    const { data: acceso } = await admin
+      .from('colaborador_menus')
+      .select('menu_id, puede_ver_recetas, puede_ver_precios, puede_ver_proveedores')
+      .in('colaborador_id', colabIds)
+      .eq('puede_ver_recetas', true)
 
-  if (!acceso?.length) redirect('/compartido')
+    if (acceso?.length) {
+      const menuIdsPermitidos = acceso.map(a => a.menu_id)
+      const { data: menuRelations } = await admin
+        .from('menu_recetas')
+        .select('menu_id')
+        .eq('receta_id', recetaId)
+        .in('menu_id', menuIdsPermitidos)
 
-  const menuIdsPermitidos = acceso.map(a => a.menu_id)
+      if (menuRelations?.length) {
+        hasColabAccess = true
+        const permisosEfectivos = acceso.filter(a =>
+          menuRelations.some(mr => mr.menu_id === a.menu_id)
+        )
+        colabPuedeVerPrecios     = permisosEfectivos.some(p => p.puede_ver_precios)
+        colabPuedeVerProveedores = permisosEfectivos.some(p => p.puede_ver_proveedores)
+      }
+    }
+  }
 
-  // Comprobar que alguno de esos menús tiene esta receta
-  const { data: menuRelations } = await admin
-    .from('menu_recetas')
-    .select('menu_id')
-    .eq('receta_id', recetaId)
-    .in('menu_id', menuIdsPermitidos)
+  if (!directShare && !hasColabAccess) notFound()
 
-  if (!menuRelations?.length) notFound()
+  // Permisos efectivos: OR de ambas fuentes
+  const puedeVerPrecios     = (directShare?.puede_ver_precios ?? false)     || colabPuedeVerPrecios
+  const puedeVerProveedores = (directShare?.puede_ver_proveedores ?? false) || colabPuedeVerProveedores
 
-  // Permisos efectivos: OR de todos los menús que contienen esta receta
-  const permisosEfectivos = acceso.filter(a =>
-    menuRelations.some(mr => mr.menu_id === a.menu_id)
-  )
-  const puedeVerPrecios     = permisosEfectivos.some(p => p.puede_ver_precios)
-  const puedeVerProveedores = permisosEfectivos.some(p => p.puede_ver_proveedores)
+  // Marcar como vista si era nueva
+  if (directShare && !directShare.vista) {
+    await marcarRecetaVista(directShare.id)
+  }
 
   // ── 2. Obtener datos de la receta ──────────────────────────────────────────
   const [recetaRes, ingRes] = await Promise.all([

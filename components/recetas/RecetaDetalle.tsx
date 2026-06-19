@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   ArrowLeft, Plus, Trash2, AlertTriangle, TrendingUp, TrendingDown,
   ChefHat, Pencil, Check, X, Printer, Clock, AlertCircle, Camera, Loader2,
-  HelpCircle, Lock, FileText,
+  HelpCircle, Lock, FileText, Share2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -18,6 +18,7 @@ import {
   saveNotas,
 } from '@/app/(dashboard)/recetas/[id]/actions'
 import PrintModal from './PrintModal'
+import CompartirRecetaModal from './CompartirRecetaModal'
 import ComboBox from '@/components/ui/ComboBox'
 import type { Ingrediente, Receta, PlataformaDelivery } from '@/types'
 
@@ -86,7 +87,8 @@ export default function RecetaDetalle({
   const [editingRow, setEditingRow]   = useState<IngRow | null>(null)
   const [addLoading, setAddLoading]   = useState(false)
   const [addError, setAddError]       = useState<string | null>(null)
-  const [showPrintModal, setShowPrintModal] = useState(false)
+  const [showPrintModal, setShowPrintModal]       = useState(false)
+  const [showShareModal, setShowShareModal]       = useState(false)
   const [fotoUrl, setFotoUrl]               = useState<string | null>(recetaInit.foto_url ?? null)
   const [fotoUploading, setFotoUploading]   = useState(false)
   const [fotoError, setFotoError]           = useState<string | null>(null)
@@ -390,10 +392,16 @@ export default function RecetaDetalle({
             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
             <ArrowLeft size={16} /> Regresar
           </button>
-          <button onClick={() => setShowPrintModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition-colors">
-            <Printer size={15} /> Imprimir / PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 border border-indigo-200 text-indigo-600 bg-indigo-50 rounded-lg text-sm hover:bg-indigo-100 transition-colors">
+              <Share2 size={15} /> Compartir
+            </button>
+            <button onClick={() => setShowPrintModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+              <Printer size={15} /> Imprimir / PDF
+            </button>
+          </div>
         </div>
 
         {/* Alerts bar */}
@@ -948,6 +956,15 @@ export default function RecetaDetalle({
         precioVenta={precio}
         iva={iva}
       />
+
+      {/* Share modal */}
+      {showShareModal && (
+        <CompartirRecetaModal
+          recetaId={receta.id}
+          recetaNombre={receta.nombre}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </>
   )
 }
