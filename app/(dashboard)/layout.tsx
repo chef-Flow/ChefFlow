@@ -8,18 +8,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (user?.email) {
     const emailLower = user.email.toLowerCase().trim()
-    await Promise.all([
-      supabase
-        .from('colaboradores')
-        .update({ colaborador_user_id: user.id, estado: 'activo' })
-        .eq('email', emailLower)
-        .eq('estado', 'pendiente'),
-      supabase
-        .from('recetas_compartidas')
-        .update({ receptor_user_id: user.id, estado: 'activo' })
-        .eq('receptor_email', emailLower)
-        .eq('estado', 'pendiente'),
-    ])
+    await supabase
+      .from('colaboradores')
+      .update({ colaborador_user_id: user.id, estado: 'activo' })
+      .eq('email', emailLower)
+      .eq('estado', 'pendiente')
+    // Tabla puede no existir aún — ignorar error sin crashear el layout
+    await (supabase as any)
+      .from('recetas_compartidas')
+      .update({ receptor_user_id: user.id, estado: 'activo' })
+      .eq('receptor_email', emailLower)
+      .eq('estado', 'pendiente')
+      .then(() => {}).catch(() => {})
   }
 
   return (

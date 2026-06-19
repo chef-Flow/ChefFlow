@@ -20,20 +20,21 @@ export default async function CompartidoPage() {
   if (!user) redirect('/login')
 
   // Auto-aceptar invitaciones pendientes de ambos sistemas
-  await Promise.all([
-    aceptarInvitacionesPendientes(),
-    aceptarRecetasCompartidasPendientes(),
-  ])
+  await aceptarInvitacionesPendientes()
+  await aceptarRecetasCompartidasPendientes().catch(() => {})
 
   const admin = getAdmin()
 
   // ── A. Recetas compartidas directamente ──────────────────────────────────────
-  const { data: sharesData } = await admin
-    .from('recetas_compartidas')
+  const sharesResult = await admin
+    .from('recetas_compartidas' as any)
     .select('id, receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
     .eq('receptor_user_id', user.id)
     .eq('estado', 'activo')
     .order('created_at', { ascending: false })
+    .then((r: any) => r)
+    .catch(() => ({ data: null }))
+  const sharesData = sharesResult?.data ?? null
 
   const shareIds = (sharesData ?? []).map(s => s.receta_id)
 

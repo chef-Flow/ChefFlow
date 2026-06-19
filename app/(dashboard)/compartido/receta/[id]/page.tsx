@@ -31,13 +31,16 @@ export default async function CompartidoRecetaPage({
 
   // ── 1. Verificar acceso ────────────────────────────────────────────────────
   // Fuente A: share directo de receta
-  const { data: directShare } = await admin
+  const directShareRes = await (admin as any)
     .from('recetas_compartidas')
     .select('id, puede_ver_precios, puede_ver_proveedores, vista')
     .eq('receta_id', recetaId)
     .eq('receptor_user_id', user.id)
     .eq('estado', 'activo')
     .single()
+    .then((r: any) => r)
+    .catch(() => ({ data: null }))
+  const directShare = directShareRes?.data ?? null
 
   // Fuente B: acceso vía colaboración de menú
   const { data: colabs } = await admin
