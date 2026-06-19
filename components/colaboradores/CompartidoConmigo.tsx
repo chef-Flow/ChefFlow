@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { Share2, Printer, Eye, EyeOff, Pencil, Check, X, Loader2, ChefHat } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { actualizarPrecioCompartido } from '@/app/(dashboard)/colaboradores/actions'
+import { actualizarPrecioCompartido, getRecetaParaImpresion } from '@/app/(dashboard)/colaboradores/actions'
+import type { DatosImpresion } from '@/app/(dashboard)/colaboradores/actions'
 
 interface RecetaShared {
   id: string
@@ -40,6 +41,91 @@ interface Props {
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v)
+
+function buildPrintHTML(menuNombre: string, items: DatosImpresion[]): string {
+  const styles = `
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding:32px; color:#1e293b; }
+    .receta { margin-bottom:48px; }
+    .receta+.receta { padding-top:40px; border-top:2px solid #e2e8f0; }
+    .menu-tag { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
+    .title { font-size:24px; font-weight:700; }
+    .subtitle { font-size:13px; color:#64748b; margin:4px 0 18px; }
+    .stats { display:flex; gap:28px; margin-bottom:22px; padding:14px 16px; background:#f8fafc; border-radius:8px; }
+    .stat-label { font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:3px; }
+    .stat-value { font-size:18px; font-weight:700; }
+    .orange { color:#ea580c; }
+    h3 { font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-bottom:2px solid #e2e8f0; padding:7px 10px; }
+    td { font-size:12px; padding:8px 10px; border-bottom:1px solid #f1f5f9; }
+    td strong { font-weight:600; }
+    .notas { margin-top:18px; padding:12px 14px; background:#fffbeb; border-radius:6px; border-left:3px solid #fcd34d; }
+    .notas-label { font-size:10px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+    .notas p { font-size:13px; color:#1e293b; line-height:1.5; white-space:pre-wrap; }
+    @media print { @page { margin:18mm; } }
+  `
+
+  const recetasHTML = items.map(({ receta, puedeVerPrecios, puedeVerProveedores }) => {
+    const margen =
+      receta.precio_venta && receta.precio_venta > 0
+        ? Math.round((1 - (receta.costo_por_porcion ?? 0) / receta.precio_venta) * 100)
+        : null
+
+    const statsHTML = puedeVerPrecios
+      ? `<div class="stats">
+          <div><div class="stat-label">Costo total</div><div class="stat-value orange">${fmt(receta.costo_total ?? 0)}</div></div>
+          <div><div class="stat-label">Costo/porción</div><div class="stat-value orange">${fmt(receta.costo_por_porcion ?? 0)}</div></div>
+          ${receta.precio_venta != null ? `<div><div class="stat-label">Precio venta</div><div class="stat-value">${fmt(receta.precio_venta)}</div></div>` : ''}
+          ${margen != null ? `<div><div class="stat-label">Margen</div><div class="stat-value">${margen}%</div></div>` : ''}
+        </div>`
+      : ''
+
+    const thProv    = puedeVerProveedores ? '<th>Proveedor</th>' : ''
+    const thPrecios = puedeVerPrecios ? '<th>Precio/u</th><th>Costo</th>' : ''
+
+    const filas = receta.ingredientes.map(ing => {
+      const tdProv    = puedeVerProveedores ? `<td>${ing.proveedor ?? '—'}</td>` : ''
+      const tdPrecios = puedeVerPrecios
+        ? `<td>${fmt(ing.precio_unitario)}/${ing.unidad}</td><td><strong>${fmt(ing.costo)}</strong></td>`
+        : ''
+      return `<tr>
+        <td>${ing.nombre}</td>${tdProv}
+        <td>${ing.cantidad_neta} ${ing.unidad}</td>
+        <td>${ing.cantidad_bruta.toFixed(3)} ${ing.unidad}</td>
+        <td>${ing.porcentaje_merma.toFixed(1)}%</td>
+        ${tdPrecios}
+      </tr>`
+    }).join('')
+
+    const tableHTML = receta.ingredientes.length === 0
+      ? '<p style="color:#94a3b8;font-size:13px;margin-top:4px;">Sin ingredientes registrados.</p>'
+      : `<table>
+          <thead><tr><th>Ingrediente</th>${thProv}<th>Neto</th><th>Bruto</th><th>% Merma</th>${thPrecios}</tr></thead>
+          <tbody>${filas}</tbody>
+        </table>`
+
+    const notasHTML = receta.notas
+      ? `<div class="notas"><div class="notas-label">Notas</div><p>${receta.notas}</p></div>`
+      : ''
+
+    return `<div class="receta">
+      <div class="menu-tag">${menuNombre}</div>
+      <div class="title">${receta.nombre}</div>
+      <div class="subtitle">${receta.porciones} porción${receta.porciones !== 1 ? 'es' : ''}</div>
+      ${statsHTML}
+      <h3>Ingredientes</h3>
+      ${tableHTML}
+      ${notasHTML}
+    </div>`
+  }).join('')
+
+  return `<!DOCTYPE html><html><head><title>Recetas — ${menuNombre}</title>
+    <style>${styles}</style></head><body>
+    ${recetasHTML}
+    <script>window.print(); window.close();</script>
+    </body></html>`
+}
 
 function PrecioEditable({
   recetaId,
@@ -123,93 +209,32 @@ function PrecioEditable({
   )
 }
 
-const printStyles = `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; color: #1e293b; }
-  .menu-tag { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-  .title { font-size: 26px; font-weight: 700; line-height: 1.2; }
-  .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
-  .divider { border: none; border-top: 2px solid #e2e8f0; margin: 20px 0; }
-  .stats { display: flex; gap: 36px; }
-  .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
-  .stat-value { font-size: 20px; font-weight: 700; }
-  .orange { color: #ea580c; }
-  table { width: 100%; border-collapse: collapse; margin-top: 0; }
-  th { text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 2px solid #e2e8f0; padding: 8px 10px; }
-  td { font-size: 13px; padding: 10px; border-bottom: 1px solid #f1f5f9; }
-  @media print { @page { margin: 18mm; } }
-`
-
 function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
-  const handlePrintMenu = () => {
+  const [printingId,   setPrintingId]   = useState<string | null>(null)
+  const [printingMenu, setPrintingMenu] = useState(false)
+
+  const openPrint = (html: string) => {
     const win = window.open('', '_blank')
     if (!win) return
-    const filas = permiso.menu.recetas.map(r => `
-      <tr>
-        <td>${r.nombre}</td>
-        <td>${r.porciones}</td>
-        ${permiso.puedeVerPrecios
-          ? `<td>${fmt(r.costo_por_porcion)}</td><td>${r.precio_venta != null ? fmt(r.precio_venta) : '—'}</td>`
-          : ''}
-      </tr>
-    `).join('')
-    win.document.write(`
-      <html><head><title>${permiso.menu.nombre}</title>
-      <style>${printStyles}</style></head><body>
-      <div class="menu-tag">Menú</div>
-      <div class="title">${permiso.menu.nombre}</div>
-      <div class="subtitle">${permiso.menu.recetas.length} receta${permiso.menu.recetas.length !== 1 ? 's' : ''}</div>
-      <hr class="divider" />
-      <table>
-        <thead><tr>
-          <th>Receta</th><th>Porciones</th>
-          ${permiso.puedeVerPrecios ? '<th>Costo/porción</th><th>Precio venta</th>' : ''}
-        </tr></thead>
-        <tbody>${filas}</tbody>
-      </table>
-      <script>window.print(); window.close();</script>
-      </body></html>
-    `)
+    win.document.write(html)
     win.document.close()
   }
 
-  const handlePrintReceta = (r: RecetaShared) => {
-    const win = window.open('', '_blank')
-    if (!win) return
-    const margen = r.precio_venta && r.precio_venta > 0
-      ? Math.round((1 - r.costo_por_porcion / r.precio_venta) * 100)
-      : null
-    win.document.write(`
-      <html><head><title>${r.nombre}</title>
-      <style>${printStyles}</style></head><body>
-      <div class="menu-tag">${permiso.menu.nombre}</div>
-      <div class="title">${r.nombre}</div>
-      <div class="subtitle">${r.porciones} porción${r.porciones !== 1 ? 'es' : ''}</div>
-      <hr class="divider" />
-      ${permiso.puedeVerPrecios ? `
-        <div class="stats">
-          <div>
-            <div class="stat-label">Costo por porción</div>
-            <div class="stat-value orange">${fmt(r.costo_por_porcion)}</div>
-          </div>
-          ${r.precio_venta != null ? `
-          <div>
-            <div class="stat-label">Precio de venta</div>
-            <div class="stat-value">${fmt(r.precio_venta)}</div>
-          </div>
-          ` : ''}
-          ${margen != null ? `
-          <div>
-            <div class="stat-label">Margen</div>
-            <div class="stat-value">${margen}%</div>
-          </div>
-          ` : ''}
-        </div>
-      ` : ''}
-      <script>window.print(); window.close();</script>
-      </body></html>
-    `)
-    win.document.close()
+  const handlePrintMenu = async () => {
+    setPrintingMenu(true)
+    const results = await Promise.all(permiso.menu.recetas.map(r => getRecetaParaImpresion(r.id)))
+    setPrintingMenu(false)
+    const validas = results.filter(r => r.ok && r.data).map(r => r.data!)
+    if (!validas.length) { alert('No se pudo cargar la información de las recetas'); return }
+    openPrint(buildPrintHTML(permiso.menu.nombre, validas))
+  }
+
+  const handlePrintReceta = async (r: RecetaShared) => {
+    setPrintingId(r.id)
+    const result = await getRecetaParaImpresion(r.id)
+    setPrintingId(null)
+    if (!result.ok || !result.data) { alert(result.error ?? 'Error al cargar la receta'); return }
+    openPrint(buildPrintHTML(permiso.menu.nombre, [result.data]))
   }
 
   return (
@@ -229,10 +254,13 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
         </div>
         <button
           onClick={handlePrintMenu}
-          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors border border-slate-200"
+          disabled={printingMenu}
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Printer size={13} />
-          Imprimir menú
+          {printingMenu
+            ? <Loader2 size={13} className="animate-spin" />
+            : <Printer size={13} />}
+          {printingMenu ? 'Cargando…' : 'Imprimir menú'}
         </button>
       </div>
 
@@ -290,10 +318,13 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
               {/* Per-recipe print button */}
               <button
                 onClick={() => handlePrintReceta(r)}
-                className="flex-shrink-0 p-1.5 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover/row:opacity-100"
+                disabled={printingId === r.id}
+                className="flex-shrink-0 p-1.5 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover/row:opacity-100 disabled:opacity-100"
                 title="Imprimir esta receta"
               >
-                <Printer size={14} />
+                {printingId === r.id
+                  ? <Loader2 size={14} className="animate-spin text-slate-400" />
+                  : <Printer size={14} />}
               </button>
             </li>
           ))}

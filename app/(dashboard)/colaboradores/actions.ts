@@ -118,6 +118,129 @@ export async function guardarPermisosColaborador(
   return { ok: true, permisos: (savedPerms as ColaboradorMenu[]) ?? [] }
 }
 
+// ── Tipos para impresión ──────────────────────────────────────────────────────
+
+export type IngredienteImpresion = {
+  nombre: string
+  unidad: string
+  precio_unitario: number
+  cantidad_neta: number
+  peso_merma: number
+  cantidad_bruta: number
+  porcentaje_merma: number
+  costo: number
+  proveedor: string | null
+}
+
+export type DatosImpresion = {
+  receta: {
+    nombre: string
+    porciones: number
+    costo_total: number | null
+    costo_por_porcion: number | null
+    precio_venta: number | null
+    notas: string | null
+    ingredientes: IngredienteImpresion[]
+  }
+  puedeVerPrecios: boolean
+  puedeVerProveedores: boolean
+}
+
+/**
+ * Carga los datos completos de una receta para impresión.
+ * Verifica acceso del colaborador y aplica sus permisos de visibilidad.
+ */
+export async function getRecetaParaImpresion(
+  recetaId: string,
+): Promise<{ ok: boolean; error?: string; data?: DatosImpresion }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'No autenticado' }
+
+  const admin = getAdmin()
+
+  // Colaboraciones activas del usuario
+  const { data: colabs } = await admin
+    .from('colaboradores')
+    .select('id')
+    .eq('colaborador_user_id', user.id)
+    .eq('estado', 'activo')
+
+  if (!colabs?.length) return { ok: false, error: 'Sin acceso' }
+
+  const colabIds = colabs.map(c => c.id)
+
+  // Permisos de menús donde puede ver recetas
+  const { data: acceso } = await admin
+    .from('colaborador_menus')
+    .select('menu_id, puede_ver_precios, puede_ver_proveedores')
+    .in('colaborador_id', colabIds)
+    .eq('puede_ver_recetas', true)
+
+  if (!acceso?.length) return { ok: false, error: 'Sin permisos de recetas' }
+
+  // Verificar que la receta pertenece a uno de esos menús
+  const { data: menuRelations } = await admin
+    .from('menu_recetas')
+    .select('menu_id')
+    .eq('receta_id', recetaId)
+    .in('menu_id', acceso.map(a => a.menu_id))
+
+  if (!menuRelations?.length) return { ok: false, error: 'Sin acceso a esta receta' }
+
+  const permisosEfectivos = acceso.filter(a =>
+    menuRelations.some(mr => mr.menu_id === a.menu_id)
+  )
+  const puedeVerPrecios     = permisosEfectivos.some(p => p.puede_ver_precios)
+  const puedeVerProveedores = permisosEfectivos.some(p => p.puede_ver_proveedores)
+
+  const [recetaRes, ingRes] = await Promise.all([
+    admin
+      .from('recetas')
+      .select('nombre, porciones, costo_total, costo_por_porcion, precio_venta, notas')
+      .eq('id', recetaId)
+      .single(),
+    admin
+      .from('ingredientes_receta')
+      .select(`
+        cantidad_neta, peso_merma, cantidad_bruta, porcentaje_merma, costo,
+        ingrediente:ingrediente_id(nombre, precio_compra, cantidad_presentacion, unidad_medida, proveedor),
+        sub_receta:sub_receta_id(nombre, costo_total, rendimiento, unidad_rendimiento)
+      `)
+      .eq('receta_id', recetaId),
+  ])
+
+  if (!recetaRes.data) return { ok: false, error: 'Receta no encontrada' }
+
+  const ingredientes: IngredienteImpresion[] = (ingRes.data ?? []).map((row: any) => {
+    const isIng = !!row.ingrediente
+    return {
+      nombre:           isIng ? row.ingrediente.nombre : (row.sub_receta?.nombre ?? ''),
+      unidad:           isIng ? row.ingrediente.unidad_medida : (row.sub_receta?.unidad_rendimiento ?? ''),
+      precio_unitario:  isIng
+        ? (row.ingrediente.precio_compra ?? 0) / (row.ingrediente.cantidad_presentacion ?? 1)
+        : (row.sub_receta?.rendimiento ?? 0) > 0
+          ? (row.sub_receta.costo_total ?? 0) / row.sub_receta.rendimiento
+          : 0,
+      cantidad_neta:    Number(row.cantidad_neta),
+      peso_merma:       Number(row.peso_merma ?? 0),
+      cantidad_bruta:   Number(row.cantidad_bruta),
+      porcentaje_merma: Number(row.porcentaje_merma),
+      costo:            Number(row.costo),
+      proveedor:        isIng ? (row.ingrediente?.proveedor ?? null) : null,
+    }
+  })
+
+  return {
+    ok: true,
+    data: {
+      receta: { ...recetaRes.data, ingredientes },
+      puedeVerPrecios,
+      puedeVerProveedores,
+    },
+  }
+}
+
 /**
  * Actualiza el precio de venta de una receta desde la vista compartida.
  * Solo funciona si el usuario es colaborador con puede_editar = true.
