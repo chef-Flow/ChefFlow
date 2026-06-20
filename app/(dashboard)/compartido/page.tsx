@@ -25,38 +25,40 @@ export default async function CompartidoPage() {
 
   const admin = getAdmin()
 
-  // ── A. Recetas compartidas directamente ──────────────────────────────────────
-  let sharesData: any[] | null = null
+  // ── A. Items compartidos directamente (recetas + sub-recetas) ───────────────
+  let allSharesData: any[] | null = null
   try {
     const r = await (admin as any)
       .from('recetas_compartidas')
-      .select('id, receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
+      .select('id, receta_id, sub_receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
       .eq('receptor_user_id', user.id)
       .eq('estado', 'activo')
       .order('created_at', { ascending: false })
-    sharesData = r?.data ?? null
+    allSharesData = r?.data ?? null
   } catch { /* tabla no existe aún */ }
 
-  const shareIds = (sharesData ?? []).map(s => s.receta_id)
+  const recetaShares    = (allSharesData ?? []).filter((s: any) => s.receta_id)
+  const subRecetaShares = (allSharesData ?? []).filter((s: any) => s.sub_receta_id)
 
-  // Fetch recipe data for direct shares in a flat query
-  const recetasDirectasData = shareIds.length > 0
+  // Fetch receta data
+  const recetaIds = recetaShares.map((s: any) => s.receta_id)
+  const recetasDirectasData = recetaIds.length > 0
     ? (await admin
         .from('recetas')
         .select('id, nombre, porciones, costo_por_porcion, precio_venta, foto_url')
-        .in('id', shareIds)
+        .in('id', recetaIds)
       ).data ?? []
     : []
 
-  const recetasDirectas = (sharesData ?? []).map(s => {
+  const recetasDirectas = recetaShares.map((s: any) => {
     const receta = recetasDirectasData.find((r: any) => r.id === s.receta_id)
     if (!receta) return null
     return {
-      shareId:              s.id,
-      recetaId:             s.receta_id,
-      puedeVerPrecios:      s.puede_ver_precios,
-      puedeVerProveedores:  s.puede_ver_proveedores,
-      vista:                s.vista,
+      shareId:             s.id,
+      recetaId:            s.receta_id,
+      puedeVerPrecios:     s.puede_ver_precios,
+      puedeVerProveedores: s.puede_ver_proveedores,
+      vista:               s.vista,
       receta: {
         id:               receta.id,
         nombre:           receta.nombre,
@@ -68,6 +70,35 @@ export default async function CompartidoPage() {
     }
   }).filter(Boolean)
 
+  // Fetch sub-receta data
+  const subRecetaIds = subRecetaShares.map((s: any) => s.sub_receta_id)
+  const subRecetasData = subRecetaIds.length > 0
+    ? (await admin
+        .from('sub_recetas')
+        .select('id, nombre, rendimiento, unidad_rendimiento, costo_total')
+        .in('id', subRecetaIds)
+      ).data ?? []
+    : []
+
+  const subRecetasDirectas = subRecetaShares.map((s: any) => {
+    const sr = subRecetasData.find((r: any) => r.id === s.sub_receta_id)
+    if (!sr) return null
+    return {
+      shareId:             s.id,
+      subRecetaId:         s.sub_receta_id,
+      puedeVerPrecios:     s.puede_ver_precios,
+      puedeVerProveedores: s.puede_ver_proveedores,
+      vista:               s.vista,
+      subReceta: {
+        id:                sr.id,
+        nombre:            sr.nombre,
+        rendimiento:       sr.rendimiento,
+        unidad_rendimiento: sr.unidad_rendimiento,
+        costo_total:       sr.costo_total,
+      },
+    }
+  }).filter(Boolean)
+
   // ── B. Colaboraciones de menús (lógica existente) ───────────────────────────
   const { data: colabs } = await admin
     .from('colaboradores')
@@ -75,12 +106,20 @@ export default async function CompartidoPage() {
     .eq('colaborador_user_id', user.id)
     .eq('estado', 'activo')
 
-  if (!colabs?.length && !recetasDirectas.length) {
-    return <CompartidoConmigo comparticiones={[]} recetasDirectas={[]} />
+  const hasDirectShares = recetasDirectas.length > 0 || subRecetasDirectas.length > 0
+
+  if (!colabs?.length && !hasDirectShares) {
+    return <CompartidoConmigo comparticiones={[]} recetasDirectas={[]} subRecetasDirectas={[]} />
   }
 
   if (!colabs?.length) {
-    return <CompartidoConmigo comparticiones={[]} recetasDirectas={recetasDirectas as any} />
+    return (
+      <CompartidoConmigo
+        comparticiones={[]}
+        recetasDirectas={recetasDirectas as any}
+        subRecetasDirectas={subRecetasDirectas as any}
+      />
+    )
   }
 
   const colabIds = colabs.map(c => c.id)
@@ -113,7 +152,13 @@ export default async function CompartidoPage() {
 
   const menuIds = Array.from(new Set(permisos.map(p => p.menu_id)))
   if (!menuIds.length) {
-    return <CompartidoConmigo comparticiones={[]} recetasDirectas={recetasDirectas as any} />
+    return (
+      <CompartidoConmigo
+        comparticiones={[]}
+        recetasDirectas={recetasDirectas as any}
+        subRecetasDirectas={subRecetasDirectas as any}
+      />
+    )
   }
 
   const { data: menusData } = await admin
@@ -153,6 +198,7 @@ export default async function CompartidoPage() {
     <CompartidoConmigo
       comparticiones={comparticiones as any}
       recetasDirectas={recetasDirectas as any}
+      subRecetasDirectas={subRecetasDirectas as any}
     />
   )
 }

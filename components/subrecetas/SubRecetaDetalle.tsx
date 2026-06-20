@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Pencil, Check, X, Layers, Lock } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Pencil, Check, X, Layers, Lock, Share2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ComboBox from '@/components/ui/ComboBox'
 import {
@@ -12,6 +12,7 @@ import {
   syncCostoSubreceta,
   saveMargenSeguridadSubreceta,
 } from '@/app/(dashboard)/sub-recetas/actions'
+import CompartirSubRecetaModal from '@/components/subrecetas/CompartirSubRecetaModal'
 import type { Ingrediente, SubReceta } from '@/types'
 
 interface IngRow {
@@ -57,7 +58,8 @@ export default function SubRecetaDetalle({
   const [nombreEdit, setNombreEdit] = useState(sr.nombre)
   const [rendEdit, setRendEdit] = useState(String(sr.rendimiento))
   const [margenSegStr, setMargenSegStr] = useState(String(sr.margen_seguridad ?? 0))
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showAddForm, setShowAddForm]     = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [editingRow, setEditingRow] = useState<IngRow | null>(null)
   const [addSelId, setAddSelId] = useState('')
   const [addNeta, setAddNeta] = useState('')
@@ -249,13 +251,29 @@ export default function SubRecetaDetalle({
                 <p className="text-sm text-slate-400">Rendimiento: {sr.rendimiento} {sr.unidad_rendimiento}</p>
               </div>
             </div>
-            <button onClick={() => { setNombreEdit(sr.nombre); setRendEdit(String(sr.rendimiento)); setEditingHeader(true) }}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-              <Pencil size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 border border-blue-200 text-blue-600 bg-blue-50 rounded-lg text-sm hover:bg-blue-100 transition-colors"
+              >
+                <Share2 size={15} /> Compartir
+              </button>
+              <button onClick={() => { setNombreEdit(sr.nombre); setRendEdit(String(sr.rendimiento)); setEditingHeader(true) }}
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <Pencil size={16} />
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {showShareModal && (
+        <CompartirSubRecetaModal
+          subRecetaId={sr.id}
+          subRecetaNombre={sr.nombre}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       {/* Ingredients */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

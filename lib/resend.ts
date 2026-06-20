@@ -16,13 +16,16 @@ export function buildRecetaCompartidaEmail({
   recetaNombre,
   appUrl,
   token,
+  tipo = 'receta',
 }: {
   ownerName: string
   recetaNombre: string
   appUrl: string
   token: string
+  tipo?: 'receta' | 'sub_receta'
 }): string {
   const link = `${appUrl}/receta-compartida?token=${token}`
+  const tipoLabel = tipo === 'sub_receta' ? 'sub-receta' : 'receta'
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -46,9 +49,9 @@ export function buildRecetaCompartidaEmail({
       <!-- Body -->
       <tr>
         <td style="padding:36px 32px;">
-          <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1e293b;">¡Te compartieron una receta!</p>
+          <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1e293b;">¡Te compartieron una ${tipoLabel}!</p>
           <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.6;">
-            <strong style="color:#1e293b;">${ownerName}</strong> te compartió la receta
+            <strong style="color:#1e293b;">${ownerName}</strong> te compartió la ${tipoLabel}
             <strong style="color:#1e293b;">"${recetaNombre}"</strong> en ChefFlow.
             Haz clic para verla.
           </p>
@@ -59,7 +62,7 @@ export function buildRecetaCompartidaEmail({
               <td style="background:#1a3a2a;border-radius:10px;">
                 <a href="${link}"
                   style="display:block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.2px;">
-                  Ver receta →
+                  Ver ${tipoLabel} →
                 </a>
               </td>
             </tr>

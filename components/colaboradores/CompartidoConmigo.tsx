@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { actualizarPrecioCompartido, getRecetaParaImpresion } from '@/app/(dashboard)/colaboradores/actions'
 import type { DatosImpresion } from '@/app/(dashboard)/colaboradores/actions'
-import { getRecetaDirectaParaImpresion } from '@/app/(dashboard)/recetas/compartir-actions'
+import { getRecetaDirectaParaImpresion, getSubRecetaDirectaParaImpresion } from '@/app/(dashboard)/recetas/compartir-actions'
 
 interface RecetaShared {
   id: string
@@ -52,9 +52,25 @@ interface RecetaDirecta {
   }
 }
 
+interface SubRecetaDirecta {
+  shareId: string
+  subRecetaId: string
+  puedeVerPrecios: boolean
+  puedeVerProveedores: boolean
+  vista: boolean
+  subReceta: {
+    id: string
+    nombre: string
+    rendimiento: number
+    unidad_rendimiento: string
+    costo_total: number
+  }
+}
+
 interface Props {
   comparticiones: Comparticion[]
   recetasDirectas?: RecetaDirecta[]
+  subRecetasDirectas?: SubRecetaDirecta[]
 }
 
 const fmt = (v: number) =>
@@ -224,6 +240,85 @@ function PrecioEditable({
       {current != null ? fmt(current) : <span className="text-slate-300 text-xs">Sin precio</span>}
       <Pencil size={11} className="opacity-0 group-hover:opacity-100 text-brand-400 transition-opacity" />
     </button>
+  )
+}
+
+function SubRecetaDirectaCard({ item }: { item: SubRecetaDirecta }) {
+  const [printing, setPrinting] = useState(false)
+
+  const openPrint = (html: string) => {
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+  }
+
+  const handlePrint = async () => {
+    setPrinting(true)
+    const result = await getSubRecetaDirectaParaImpresion(item.subRecetaId)
+    setPrinting(false)
+    if (!result.ok || !result.data) { alert(result.error ?? 'Error al cargar la sub-receta'); return }
+    openPrint(buildPrintHTML('Sub-receta compartida', [result.data]))
+  }
+
+  const { subReceta, puedeVerPrecios, vista } = item
+
+  return (
+    <li className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors group/row">
+      <Link href={`/compartido/sub-receta/${subReceta.id}`} className="flex items-center gap-4 flex-1 min-w-0 group">
+        <div className="relative flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center overflow-hidden">
+            <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" />
+            </svg>
+          </div>
+          {!vista && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+              {subReceta.nombre}
+            </p>
+            {!vista && (
+              <span className="flex-shrink-0 text-xs bg-indigo-100 text-indigo-600 font-semibold px-1.5 py-0.5 rounded-full">
+                Nueva
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400">
+            Rinde: {subReceta.rendimiento} {subReceta.unidad_rendimiento}
+          </p>
+        </div>
+      </Link>
+
+      {puedeVerPrecios && (
+        <div className="flex items-center gap-6 text-right flex-shrink-0">
+          <div>
+            <p className="text-xs text-slate-400">Costo total</p>
+            <p className="text-sm text-slate-600">{fmt(subReceta.costo_total)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Costo/{subReceta.unidad_rendimiento}</p>
+            <p className="text-sm text-slate-600">
+              {subReceta.rendimiento > 0 ? fmt(subReceta.costo_total / subReceta.rendimiento) : '—'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handlePrint}
+        disabled={printing}
+        className="flex-shrink-0 p-1.5 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover/row:opacity-100 disabled:opacity-100"
+        title="Imprimir sub-receta"
+      >
+        {printing
+          ? <Loader2 size={14} className="animate-spin text-slate-400" />
+          : <Printer size={14} />}
+      </button>
+    </li>
   )
 }
 
@@ -433,10 +528,12 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
   )
 }
 
-export default function CompartidoConmigo({ comparticiones, recetasDirectas = [] }: Props) {
+export default function CompartidoConmigo({ comparticiones, recetasDirectas = [], subRecetasDirectas = [] }: Props) {
   const allPermisos = comparticiones.flatMap(c => c.permisos)
-  const nuevas = recetasDirectas.filter(r => !r.vista)
-  const isEmpty = allPermisos.length === 0 && recetasDirectas.length === 0
+  const nuevasRecetas    = recetasDirectas.filter(r => !r.vista)
+  const nuevasSubRecetas = subRecetasDirectas.filter(s => !s.vista)
+  const totalNuevas = nuevasRecetas.length + nuevasSubRecetas.length
+  const isEmpty = allPermisos.length === 0 && recetasDirectas.length === 0 && subRecetasDirectas.length === 0
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -446,9 +543,9 @@ export default function CompartidoConmigo({ comparticiones, recetasDirectas = []
           <h1 className="text-2xl font-bold text-slate-900">Compartido conmigo</h1>
           <p className="text-sm text-slate-500 mt-0.5">Menús y recetas que otros chefs han compartido contigo</p>
         </div>
-        {nuevas.length > 0 && (
+        {totalNuevas > 0 && (
           <span className="ml-auto flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-xs font-bold">
-            {nuevas.length}
+            {totalNuevas}
           </span>
         )}
       </div>
@@ -458,7 +555,7 @@ export default function CompartidoConmigo({ comparticiones, recetasDirectas = []
           <Share2 className="mx-auto mb-3 text-slate-200" size={52} />
           <p className="text-slate-500 font-medium text-sm">Nada compartido contigo aún.</p>
           <p className="text-slate-400 text-xs mt-1">
-            Cuando alguien te comparta un menú o una receta, aparecerá aquí.
+            Cuando alguien te comparta un menú, receta o sub-receta, aparecerá aquí.
           </p>
         </div>
       ) : (
@@ -474,6 +571,22 @@ export default function CompartidoConmigo({ comparticiones, recetasDirectas = []
                 <ul className="divide-y divide-slate-100">
                   {recetasDirectas.map(item => (
                     <RecetaDirectaCard key={item.shareId} item={item} />
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* ── Sub-recetas compartidas ── */}
+          {subRecetasDirectas.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                Sub-recetas compartidas contigo
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <ul className="divide-y divide-slate-100">
+                  {subRecetasDirectas.map(item => (
+                    <SubRecetaDirectaCard key={item.shareId} item={item} />
                   ))}
                 </ul>
               </div>

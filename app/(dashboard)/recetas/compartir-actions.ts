@@ -226,6 +226,177 @@ export async function getRecetaDirectaParaImpresion(
   }
 }
 
+export async function compartirSubReceta(
+  subRecetaId: string,
+  email: string,
+  permisos: { puedeVerPrecios: boolean; puedeVerProveedores: boolean },
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'No autenticado' }
+
+  const emailLower = email.trim().toLowerCase()
+  if (emailLower === user.email?.toLowerCase()) {
+    return { ok: false, error: 'No puedes compartir una sub-receta contigo mismo' }
+  }
+
+  const { data: subReceta } = await supabase
+    .from('sub_recetas')
+    .select('id, nombre')
+    .eq('id', subRecetaId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!subReceta) return { ok: false, error: 'Sub-receta no encontrada' }
+
+  const admin = getAdmin()
+
+  const { data: share, error: shareError } = await (admin as any)
+    .from('recetas_compartidas')
+    .upsert(
+      {
+        sub_receta_id:         subRecetaId,
+        propietario_id:        user.id,
+        receptor_email:        emailLower,
+        estado:                'pendiente',
+        puede_ver_precios:     permisos.puedeVerPrecios,
+        puede_ver_proveedores: permisos.puedeVerProveedores,
+        vista:                 false,
+      },
+      { onConflict: 'sub_receta_id,receptor_email' },
+    )
+    .select('token')
+    .single()
+
+  if (shareError) return { ok: false, error: shareError.message }
+
+  await (admin as any)
+    .from('contactos_compartir')
+    .upsert(
+      { propietario_id: user.id, email: emailLower, last_shared_at: new Date().toISOString() },
+      { onConflict: 'propietario_id,email' },
+    )
+
+  const ownerName =
+    (user.user_metadata?.full_name as string | undefined) || user.email || 'El propietario'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+  try {
+    const html = buildRecetaCompartidaEmail({
+      ownerName,
+      recetaNombre: subReceta.nombre,
+      appUrl,
+      token: share.token,
+      tipo: 'sub_receta',
+    })
+    await getResend().emails.send({
+      from: 'ChefFlow <onboarding@resend.dev>',
+      to: emailLower,
+      subject: `${ownerName} te compartió una sub-receta en ChefFlow`,
+      html,
+    })
+  } catch (err: any) {
+    console.error('[compartirSubReceta] Resend error:', err.message)
+    return { ok: true, error: `Compartido, pero el correo no se pudo enviar: ${err.message}` }
+  }
+
+  revalidatePath(`/sub-recetas/${subRecetaId}`)
+  return { ok: true }
+}
+
+export async function getSharesDeSubReceta(subRecetaId: string): Promise<
+  Array<{
+    id: string
+    receptor_email: string
+    estado: string
+    puede_ver_precios: boolean
+    puede_ver_proveedores: boolean
+    created_at: string
+  }>
+> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('recetas_compartidas' as any)
+    .select('id, receptor_email, estado, puede_ver_precios, puede_ver_proveedores, created_at')
+    .eq('sub_receta_id', subRecetaId)
+    .neq('estado', 'revocado')
+    .order('created_at', { ascending: false })
+  return (data as any[]) ?? []
+}
+
+export async function getSubRecetaDirectaParaImpresion(
+  subRecetaId: string,
+): Promise<{ ok: boolean; error?: string; data?: any }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'No autenticado' }
+
+  const admin = getAdmin()
+
+  let share: { puede_ver_precios: boolean; puede_ver_proveedores: boolean } | null = null
+  try {
+    const r = await (admin as any)
+      .from('recetas_compartidas')
+      .select('puede_ver_precios, puede_ver_proveedores')
+      .eq('sub_receta_id', subRecetaId)
+      .eq('receptor_user_id', user.id)
+      .eq('estado', 'activo')
+      .single()
+    share = r?.data ?? null
+  } catch { /* tabla no existe aún */ }
+
+  if (!share) return { ok: false, error: 'Sin acceso a esta sub-receta' }
+
+  const [srRes, ingRes] = await Promise.all([
+    admin
+      .from('sub_recetas')
+      .select('nombre, rendimiento, unidad_rendimiento, costo_total, margen_seguridad')
+      .eq('id', subRecetaId)
+      .single(),
+    admin
+      .from('ingredientes_subreceta')
+      .select(`
+        cantidad_neta, peso_merma, cantidad_bruta, porcentaje_merma, costo,
+        ingrediente:ingrediente_id(nombre, precio_compra, cantidad_presentacion, unidad_medida, proveedor)
+      `)
+      .eq('sub_receta_id', subRecetaId),
+  ])
+
+  if (!srRes.data) return { ok: false, error: 'Sub-receta no encontrada' }
+
+  const ingredientes = (ingRes.data ?? []).map((row: any) => ({
+    nombre:           row.ingrediente?.nombre ?? '',
+    unidad:           row.ingrediente?.unidad_medida ?? '',
+    precio_unitario:  (row.ingrediente?.precio_compra ?? 0) / (row.ingrediente?.cantidad_presentacion ?? 1),
+    cantidad_neta:    Number(row.cantidad_neta),
+    peso_merma:       Number(row.peso_merma ?? 0),
+    cantidad_bruta:   Number(row.cantidad_bruta),
+    porcentaje_merma: Number(row.porcentaje_merma),
+    costo:            Number(row.costo),
+    proveedor:        row.ingrediente?.proveedor ?? null,
+  }))
+
+  const sr = srRes.data as any
+  return {
+    ok: true,
+    data: {
+      receta: {
+        nombre:           sr.nombre,
+        porciones:        sr.rendimiento,
+        costo_total:      sr.costo_total,
+        costo_por_porcion: sr.rendimiento > 0 ? sr.costo_total / sr.rendimiento : 0,
+        precio_venta:     null,
+        notas:            null,
+        ingredientes,
+        esSubReceta:      true,
+        unidad_rendimiento: sr.unidad_rendimiento,
+      },
+      puedeVerPrecios:     share.puede_ver_precios,
+      puedeVerProveedores: share.puede_ver_proveedores,
+    },
+  }
+}
+
 export async function getSharesDeReceta(recetaId: string): Promise<
   Array<{
     id: string
