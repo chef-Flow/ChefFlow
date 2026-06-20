@@ -251,10 +251,32 @@ export async function compartirSubReceta(
 
   const admin = getAdmin()
 
-  const { data: share, error: shareError } = await (admin as any)
+  // Los índices parciales no funcionan con ON CONFLICT — hacemos SELECT + INSERT/UPDATE manual
+  const { data: existing } = await (admin as any)
     .from('recetas_compartidas')
-    .upsert(
-      {
+    .select('id, token')
+    .eq('sub_receta_id', subRecetaId)
+    .eq('receptor_email', emailLower)
+    .maybeSingle()
+
+  let shareToken: string
+
+  if (existing) {
+    const { error: updateError } = await (admin as any)
+      .from('recetas_compartidas')
+      .update({
+        estado:                'pendiente',
+        puede_ver_precios:     permisos.puedeVerPrecios,
+        puede_ver_proveedores: permisos.puedeVerProveedores,
+        vista:                 false,
+      })
+      .eq('id', existing.id)
+    if (updateError) return { ok: false, error: updateError.message }
+    shareToken = existing.token
+  } else {
+    const { data: newShare, error: insertError } = await (admin as any)
+      .from('recetas_compartidas')
+      .insert({
         sub_receta_id:         subRecetaId,
         propietario_id:        user.id,
         receptor_email:        emailLower,
@@ -262,13 +284,12 @@ export async function compartirSubReceta(
         puede_ver_precios:     permisos.puedeVerPrecios,
         puede_ver_proveedores: permisos.puedeVerProveedores,
         vista:                 false,
-      },
-      { onConflict: 'sub_receta_id,receptor_email' },
-    )
-    .select('token')
-    .single()
-
-  if (shareError) return { ok: false, error: shareError.message }
+      })
+      .select('token')
+      .single()
+    if (insertError) return { ok: false, error: insertError.message }
+    shareToken = newShare.token
+  }
 
   await (admin as any)
     .from('contactos_compartir')
@@ -286,7 +307,7 @@ export async function compartirSubReceta(
       ownerName,
       recetaNombre: subReceta.nombre,
       appUrl,
-      token: share.token,
+      token: shareToken,
       tipo: 'sub_receta',
     })
     await getResend().emails.send({
