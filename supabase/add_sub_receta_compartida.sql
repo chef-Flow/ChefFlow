@@ -7,7 +7,7 @@ ALTER TABLE public.recetas_compartidas
     REFERENCES public.sub_recetas(id) ON DELETE CASCADE;
 
 ALTER TABLE public.recetas_compartidas
-  ADD CONSTRAINT IF NOT EXISTS chk_receta_or_sub CHECK (
+  ADD CONSTRAINT chk_receta_or_sub CHECK (
     (receta_id IS NOT NULL AND sub_receta_id IS NULL) OR
     (receta_id IS NULL AND sub_receta_id IS NOT NULL)
   );
