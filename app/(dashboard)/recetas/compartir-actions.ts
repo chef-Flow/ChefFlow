@@ -314,14 +314,19 @@ export async function getSharesDeSubReceta(subRecetaId: string): Promise<
     created_at: string
   }>
 > {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('recetas_compartidas' as any)
-    .select('id, receptor_email, estado, puede_ver_precios, puede_ver_proveedores, created_at')
-    .eq('sub_receta_id', subRecetaId)
-    .neq('estado', 'revocado')
-    .order('created_at', { ascending: false })
-  return (data as any[]) ?? []
+  const admin = getAdmin()
+  try {
+    const r = await (admin as any)
+      .from('recetas_compartidas')
+      .select('id, receptor_email, estado, puede_ver_precios, puede_ver_proveedores, created_at')
+      .eq('sub_receta_id', subRecetaId)
+      .neq('estado', 'revocado')
+      .order('created_at', { ascending: false })
+    if (r?.error) return []
+    return (r?.data as any[]) ?? []
+  } catch {
+    return []
+  }
 }
 
 export async function getSubRecetaDirectaParaImpresion(

@@ -34,7 +34,18 @@ export default async function CompartidoPage() {
       .eq('receptor_user_id', user.id)
       .eq('estado', 'activo')
       .order('created_at', { ascending: false })
-    allSharesData = r?.data ?? null
+    if (r?.error) {
+      // Columna sub_receta_id puede no existir todavía — fallback sin ella
+      const r2 = await (admin as any)
+        .from('recetas_compartidas')
+        .select('id, receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
+        .eq('receptor_user_id', user.id)
+        .eq('estado', 'activo')
+        .order('created_at', { ascending: false })
+      allSharesData = r2?.data ?? null
+    } else {
+      allSharesData = r?.data ?? null
+    }
   } catch { /* tabla no existe aún */ }
 
   const recetaShares    = (allSharesData ?? []).filter((s: any) => s.receta_id)
