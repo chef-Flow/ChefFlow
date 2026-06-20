@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { actualizarPrecioCompartido, getRecetaParaImpresion } from '@/app/(dashboard)/colaboradores/actions'
 import type { DatosImpresion } from '@/app/(dashboard)/colaboradores/actions'
+import { getRecetaDirectaParaImpresion } from '@/app/(dashboard)/recetas/compartir-actions'
 
 interface RecetaShared {
   id: string
@@ -226,6 +227,87 @@ function PrecioEditable({
   )
 }
 
+function RecetaDirectaCard({ item }: { item: RecetaDirecta }) {
+  const [printing, setPrinting] = useState(false)
+
+  const openPrint = (html: string) => {
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+  }
+
+  const handlePrint = async () => {
+    setPrinting(true)
+    const result = await getRecetaDirectaParaImpresion(item.recetaId)
+    setPrinting(false)
+    if (!result.ok || !result.data) { alert(result.error ?? 'Error al cargar la receta'); return }
+    openPrint(buildPrintHTML('Receta compartida', [result.data]))
+  }
+
+  const { receta, puedeVerPrecios, vista } = item
+
+  return (
+    <li className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors group/row">
+      <Link href={`/compartido/receta/${receta.id}`} className="flex items-center gap-4 flex-1 min-w-0 group">
+        <div className="relative flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-brand-50 overflow-hidden">
+            {receta.foto_url ? (
+              <Image src={receta.foto_url} alt={receta.nombre} width={40} height={40} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ChefHat size={16} className="text-brand-200" />
+              </div>
+            )}
+          </div>
+          {!vista && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+              {receta.nombre}
+            </p>
+            {!vista && (
+              <span className="flex-shrink-0 text-xs bg-indigo-100 text-indigo-600 font-semibold px-1.5 py-0.5 rounded-full">
+                Nueva
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400">{receta.porciones} porción{receta.porciones !== 1 ? 'es' : ''}</p>
+        </div>
+      </Link>
+
+      {puedeVerPrecios && (
+        <div className="flex items-center gap-6 text-right flex-shrink-0">
+          <div>
+            <p className="text-xs text-slate-400">Costo/porción</p>
+            <p className="text-sm text-slate-600">{fmt(receta.costo_por_porcion)}</p>
+          </div>
+          {receta.precio_venta != null && (
+            <div>
+              <p className="text-xs text-slate-400">Precio venta</p>
+              <p className="text-sm font-medium text-slate-700">{fmt(receta.precio_venta)}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <button
+        onClick={handlePrint}
+        disabled={printing}
+        className="flex-shrink-0 p-1.5 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover/row:opacity-100 disabled:opacity-100"
+        title="Imprimir receta"
+      >
+        {printing
+          ? <Loader2 size={14} className="animate-spin text-slate-400" />
+          : <Printer size={14} />}
+      </button>
+    </li>
+  )
+}
+
 function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
   const [printingId,   setPrintingId]   = useState<string | null>(null)
   const [printingMenu, setPrintingMenu] = useState(false)
@@ -390,53 +472,8 @@ export default function CompartidoConmigo({ comparticiones, recetasDirectas = []
               </p>
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <ul className="divide-y divide-slate-100">
-                  {recetasDirectas.map(({ shareId, receta, puedeVerPrecios, vista }) => (
-                    <li key={shareId} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/70 transition-colors">
-                      <Link href={`/compartido/receta/${receta.id}`} className="flex items-center gap-4 flex-1 min-w-0 group">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-10 h-10 rounded-lg bg-brand-50 overflow-hidden">
-                            {receta.foto_url ? (
-                              <Image src={receta.foto_url} alt={receta.nombre} width={40} height={40} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <ChefHat size={16} className="text-brand-200" />
-                              </div>
-                            )}
-                          </div>
-                          {!vista && (
-                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                              {receta.nombre}
-                            </p>
-                            {!vista && (
-                              <span className="flex-shrink-0 text-xs bg-indigo-100 text-indigo-600 font-semibold px-1.5 py-0.5 rounded-full">
-                                Nueva
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-400">{receta.porciones} porción{receta.porciones !== 1 ? 'es' : ''}</p>
-                        </div>
-                      </Link>
-
-                      {puedeVerPrecios && (
-                        <div className="flex items-center gap-6 text-right flex-shrink-0">
-                          <div>
-                            <p className="text-xs text-slate-400">Costo/porción</p>
-                            <p className="text-sm text-slate-600">{fmt(receta.costo_por_porcion)}</p>
-                          </div>
-                          {receta.precio_venta != null && (
-                            <div>
-                              <p className="text-xs text-slate-400">Precio venta</p>
-                              <p className="text-sm font-medium text-slate-700">{fmt(receta.precio_venta)}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </li>
+                  {recetasDirectas.map(item => (
+                    <RecetaDirectaCard key={item.shareId} item={item} />
                   ))}
                 </ul>
               </div>
