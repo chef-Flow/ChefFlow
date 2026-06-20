@@ -26,15 +26,16 @@ export default async function CompartidoPage() {
   const admin = getAdmin()
 
   // ── A. Recetas compartidas directamente ──────────────────────────────────────
-  const sharesResult = await admin
-    .from('recetas_compartidas' as any)
-    .select('id, receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
-    .eq('receptor_user_id', user.id)
-    .eq('estado', 'activo')
-    .order('created_at', { ascending: false })
-    .then((r: any) => r)
-    .catch(() => ({ data: null }))
-  const sharesData = sharesResult?.data ?? null
+  let sharesData: any[] | null = null
+  try {
+    const r = await (admin as any)
+      .from('recetas_compartidas')
+      .select('id, receta_id, puede_ver_precios, puede_ver_proveedores, vista, created_at')
+      .eq('receptor_user_id', user.id)
+      .eq('estado', 'activo')
+      .order('created_at', { ascending: false })
+    sharesData = r?.data ?? null
+  } catch { /* tabla no existe aún */ }
 
   const shareIds = (sharesData ?? []).map(s => s.receta_id)
 

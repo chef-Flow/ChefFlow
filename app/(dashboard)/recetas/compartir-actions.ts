@@ -165,17 +165,18 @@ export async function getRecetaDirectaParaImpresion(
 
   const admin = getAdmin()
 
-  const shareRes = await (admin as any)
-    .from('recetas_compartidas')
-    .select('puede_ver_precios, puede_ver_proveedores')
-    .eq('receta_id', recetaId)
-    .eq('receptor_user_id', user.id)
-    .eq('estado', 'activo')
-    .single()
-    .then((r: any) => r)
-    .catch(() => ({ data: null }))
+  let share: { puede_ver_precios: boolean; puede_ver_proveedores: boolean } | null = null
+  try {
+    const r = await (admin as any)
+      .from('recetas_compartidas')
+      .select('puede_ver_precios, puede_ver_proveedores')
+      .eq('receta_id', recetaId)
+      .eq('receptor_user_id', user.id)
+      .eq('estado', 'activo')
+      .single()
+    share = r?.data ?? null
+  } catch { /* tabla no existe aún */ }
 
-  const share = shareRes?.data
   if (!share) return { ok: false, error: 'Sin acceso a esta receta' }
 
   const [recetaRes, ingRes] = await Promise.all([
