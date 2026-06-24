@@ -174,9 +174,21 @@ function buildPrintHTML(menuNombre: string, items: DatosImpresion[], appOrigin =
     <style>${styles}</style></head><body>
     ${recetasHTML}
     <script>
-      window.addEventListener('load', function () {
-        setTimeout(function () { window.print(); }, 400);
+      function doPrint() {
+        window.print();
         window.addEventListener('afterprint', function () { window.close(); });
+      }
+      window.addEventListener('load', function () {
+        var imgs = Array.from(document.querySelectorAll('img'));
+        if (imgs.length === 0) { setTimeout(doPrint, 100); return; }
+        var pending = imgs.filter(function(img) { return !img.complete; });
+        if (pending.length === 0) { setTimeout(doPrint, 200); return; }
+        var done = 0;
+        pending.forEach(function(img) {
+          function next() { done++; if (done === pending.length) setTimeout(doPrint, 200); }
+          img.addEventListener('load', next);
+          img.addEventListener('error', next);
+        });
       });
     <\/script>
     </body></html>`
@@ -358,8 +370,7 @@ function RecetaDirectaCard({ item }: { item: RecetaDirecta }) {
     const result = await getRecetaDirectaParaImpresion(item.recetaId)
     setPrinting(false)
     if (!result.ok || !result.data) { alert(result.error ?? 'Error al cargar la receta'); return }
-    const data = { ...result.data, receta: { ...result.data.receta, foto_url: item.receta.foto_url } }
-    openPrint(buildPrintHTML('Receta compartida', [data], window.location.origin))
+    openPrint(buildPrintHTML('Receta compartida', [result.data], window.location.origin))
   }
 
   const { receta, puedeVerPrecios, vista } = item
@@ -442,9 +453,7 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
     setPrintingMenu(false)
     const origin = window.location.origin
     const validas = results
-      .map((res, i) => res.ok && res.data
-        ? { ...res.data, receta: { ...res.data.receta, foto_url: permiso.menu.recetas[i].foto_url ?? null } }
-        : null)
+      .map((res) => res.ok && res.data ? res.data : null)
       .filter((d): d is DatosImpresion => d !== null)
     if (!validas.length) { alert('No se pudo cargar la información de las recetas'); return }
     openPrint(buildPrintHTML(permiso.menu.nombre, validas, origin))
@@ -455,8 +464,7 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
     const result = await getRecetaParaImpresion(r.id)
     setPrintingId(null)
     if (!result.ok || !result.data) { alert(result.error ?? 'Error al cargar la receta'); return }
-    const data = { ...result.data, receta: { ...result.data.receta, foto_url: r.foto_url } }
-    openPrint(buildPrintHTML(permiso.menu.nombre, [data], window.location.origin))
+    openPrint(buildPrintHTML(permiso.menu.nombre, [result.data], window.location.origin))
   }
 
   return (
