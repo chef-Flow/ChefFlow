@@ -10,14 +10,19 @@ export async function GET(request: NextRequest) {
   const next  = searchParams.get('next') ?? '/analisis'
   const error = searchParams.get('error')
 
+  // En producción (Vercel) el hostname público viene en x-forwarded-host.
+  // Usar origin directamente puede dar la URL interna del proxy en algunos entornos.
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const baseUrl = forwardedHost ? `https://${forwardedHost}` : origin
+
   if (error) {
-    const url = new URL('/login', origin)
+    const url = new URL('/login', baseUrl)
     url.searchParams.set('error', 'Acceso con Google cancelado.')
     return NextResponse.redirect(url)
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL('/login', origin))
+    return NextResponse.redirect(new URL('/login', baseUrl))
   }
 
   const cookieStore = await cookies()
@@ -41,17 +46,17 @@ export async function GET(request: NextRequest) {
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
   if (exchangeError) {
-    const url = new URL('/login', origin)
+    const url = new URL('/login', baseUrl)
     url.searchParams.set('error', 'No se pudo iniciar sesión.')
     return NextResponse.redirect(url)
   }
 
   // Si es recuperación de contraseña, ir a reset-password
   if (type === 'recovery') {
-    return NextResponse.redirect(new URL('/reset-password', origin))
+    return NextResponse.redirect(new URL('/reset-password', baseUrl))
   }
 
   // Destino seguro: solo rutas internas
   const redirectTo = next.startsWith('/') ? next : '/analisis'
-  return NextResponse.redirect(new URL(redirectTo, origin))
+  return NextResponse.redirect(new URL(redirectTo, baseUrl))
 }

@@ -107,7 +107,7 @@ ${content}
     }).join('')
 
     const fotoHTML = inclFoto && fotoUrl ? `
-      <img src="${esc(fotoUrl.split('?')[0])}"
+      <img src="${esc(fotoUrl)}"
         style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;"
         alt="${esc(recetaNombre)}" />` : ''
 

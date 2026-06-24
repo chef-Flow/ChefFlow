@@ -98,6 +98,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Usuario autenticado en landing → dashboard
+  // Cubre el caso donde Supabase redirige a la Site URL en vez del callback
+  if (user && pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/analisis'
+    return NextResponse.redirect(url)
+  }
+
   return supabaseResponse
 }
 

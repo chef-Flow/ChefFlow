@@ -12,6 +12,20 @@ function getAdmin() {
   )
 }
 
+async function urlToDataUrl(url: string | null): Promise<string | null> {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const buf = await res.arrayBuffer()
+    const b64 = Buffer.from(buf).toString('base64')
+    const ct = res.headers.get('content-type') ?? 'image/jpeg'
+    return `data:${ct};base64,${b64}`
+  } catch {
+    return null
+  }
+}
+
 /**
  * Acepta invitaciones pendientes cuyo email coincida con el usuario autenticado
  * y crea permisos por defecto en todos los menús del propietario.
@@ -140,6 +154,7 @@ export type DatosImpresion = {
     costo_por_porcion: number | null
     precio_venta: number | null
     notas: string | null
+    foto_url?: string | null
     ingredientes: IngredienteImpresion[]
   }
   puedeVerPrecios: boolean
@@ -197,7 +212,7 @@ export async function getRecetaParaImpresion(
   const [recetaRes, ingRes] = await Promise.all([
     admin
       .from('recetas')
-      .select('nombre, porciones, costo_total, costo_por_porcion, precio_venta, notas')
+      .select('nombre, porciones, costo_total, costo_por_porcion, precio_venta, notas, foto_url')
       .eq('id', recetaId)
       .single(),
     admin
@@ -211,6 +226,8 @@ export async function getRecetaParaImpresion(
   ])
 
   if (!recetaRes.data) return { ok: false, error: 'Receta no encontrada' }
+
+  const fotoDataUrl = await urlToDataUrl((recetaRes.data as any).foto_url ?? null)
 
   const ingredientes: IngredienteImpresion[] = (ingRes.data ?? []).map((row: any) => {
     const isIng = !!row.ingrediente
@@ -234,7 +251,7 @@ export async function getRecetaParaImpresion(
   return {
     ok: true,
     data: {
-      receta: { ...recetaRes.data, ingredientes },
+      receta: { ...recetaRes.data, ingredientes, foto_url: fotoDataUrl },
       puedeVerPrecios,
       puedeVerProveedores,
     },

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Menu, X, ShoppingBasket, BookOpen, Layers, Settings,
-  LogOut, UtensilsCrossed, Truck, Users, BarChart2, Share2, UserCircle,
+  LogOut, UtensilsCrossed, Truck, Users, BarChart2, Share2, UserCircle, HelpCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AppLogo from '@/components/ui/AppLogo'
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/colaboradores', label: 'Colaboradores',     icon: Users },
   { href: '/compartido',    label: 'Compartido conmigo', icon: Share2 },
   { href: '/configuracion', label: 'Configuración',     icon: Settings },
+  { href: '/ayuda',         label: 'Ayuda',              icon: HelpCircle },
   { href: '/cuenta',        label: 'Mi Cuenta',          icon: UserCircle },
 ]
 

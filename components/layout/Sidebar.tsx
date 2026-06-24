@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   ShoppingBasket, BookOpen, Layers, Settings, LogOut,
-  UtensilsCrossed, Truck, Users, BarChart2, Share2,
+  UtensilsCrossed, Truck, Users, BarChart2, Share2, HelpCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
@@ -23,6 +23,7 @@ const secondaryItems = [
   { href: '/colaboradores', label: 'Colaboradores',      icon: Users },
   { href: '/compartido',    label: 'Compartido conmigo', icon: Share2 },
   { href: '/configuracion', label: 'Configuración',      icon: Settings },
+  { href: '/ayuda',         label: 'Ayuda',              icon: HelpCircle },
 ]
 
 export default function Sidebar() {

@@ -12,6 +12,20 @@ function getAdmin() {
   )
 }
 
+async function urlToDataUrl(url: string | null): Promise<string | null> {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const buf = await res.arrayBuffer()
+    const b64 = Buffer.from(buf).toString('base64')
+    const ct = res.headers.get('content-type') ?? 'image/jpeg'
+    return `data:${ct};base64,${b64}`
+  } catch {
+    return null
+  }
+}
+
 export async function compartirReceta(
   recetaId: string,
   email: string,
@@ -182,7 +196,7 @@ export async function getRecetaDirectaParaImpresion(
   const [recetaRes, ingRes] = await Promise.all([
     admin
       .from('recetas')
-      .select('nombre, porciones, costo_total, costo_por_porcion, precio_venta, notas')
+      .select('nombre, porciones, costo_total, costo_por_porcion, precio_venta, notas, foto_url')
       .eq('id', recetaId)
       .single(),
     admin
@@ -216,10 +230,12 @@ export async function getRecetaDirectaParaImpresion(
     }
   })
 
+  const fotoDataUrl = await urlToDataUrl((recetaRes.data as any).foto_url ?? null)
+
   return {
     ok: true,
     data: {
-      receta: { ...recetaRes.data, ingredientes },
+      receta: { ...recetaRes.data, ingredientes, foto_url: fotoDataUrl },
       puedeVerPrecios:     share.puede_ver_precios,
       puedeVerProveedores: share.puede_ver_proveedores,
     },
