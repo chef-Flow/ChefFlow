@@ -13,41 +13,39 @@ declare global {
 }
 
 export default function CrispSection() {
-  const [ready, setReady] = useState(false)
+  const [clicking, setClicking] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    if (window.$crisp) {
-      // Crisp ya cargado (ej: regresó a la página)
-      window.$crisp.push(['do', 'chat:hide'])
-      setReady(true)
-    } else {
+    if (!window.$crisp) {
       window.$crisp = []
       window.CRISP_WEBSITE_ID = CRISP_WEBSITE_ID
-      // Ocultar el widget flotante antes de que Crisp inicialice
       window.$crisp.push(['do', 'chat:hide'])
 
       const s = document.createElement('script')
       s.src = 'https://client.crisp.chat/l.js'
       s.async = true
-      s.onload = () => setReady(true)
       document.head.appendChild(s)
+    } else {
+      window.$crisp.push(['do', 'chat:hide'])
     }
 
     return () => {
-      // Ocultar el widget al salir de la página
       try { window.$crisp?.push(['do', 'chat:hide']) } catch { /* ignore */ }
     }
   }, [])
 
   const openChat = () => {
     if (!window.$crisp) return
+    setClicking(true)
     window.$crisp.push(['do', 'chat:show'])
     window.$crisp.push(['do', 'chat:open'])
     window.$crisp.push(['on', 'chat:closed', () => {
       window.$crisp.push(['do', 'chat:hide'])
+      setClicking(false)
     }])
+    setTimeout(() => setClicking(false), 1500)
   }
 
   return (
@@ -70,18 +68,17 @@ export default function CrispSection() {
 
       <button
         onClick={openChat}
-        disabled={!ready}
-        className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
       >
-        {ready ? (
+        {clicking ? (
           <>
-            <MessageCircle size={15} />
-            Abrir chat de soporte
+            <Loader2 size={15} className="animate-spin" />
+            Abriendo chat…
           </>
         ) : (
           <>
-            <Loader2 size={15} className="animate-spin" />
-            Cargando chat…
+            <MessageCircle size={15} />
+            Abrir chat de soporte
           </>
         )}
       </button>
