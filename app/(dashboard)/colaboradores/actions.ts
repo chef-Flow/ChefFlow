@@ -154,7 +154,7 @@ export type DatosImpresion = {
     costo_por_porcion: number | null
     precio_venta: number | null
     notas: string | null
-    foto_url?: string | null
+    foto_url: string | null
     ingredientes: IngredienteImpresion[]
   }
   puedeVerPrecios: boolean
