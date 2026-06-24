@@ -443,7 +443,7 @@ function MenuCard({ permiso }: { permiso: PermisoConMenu }) {
     const origin = window.location.origin
     const validas = results
       .map((res, i) => res.ok && res.data
-        ? { ...res.data, receta: { ...res.data.receta, foto_url: permiso.menu.recetas[i].foto_url } }
+        ? { ...res.data, receta: { ...res.data.receta, foto_url: permiso.menu.recetas[i].foto_url ?? null } }
         : null)
       .filter((d): d is DatosImpresion => d !== null)
     if (!validas.length) { alert('No se pudo cargar la información de las recetas'); return }
