@@ -14,7 +14,7 @@ interface Pasos {
 const STEPS = [
   { key: 'ingrediente' as const, label: 'Crea tu primer ingrediente', href: '/ingredientes' },
   { key: 'receta'      as const, label: 'Crea tu primera receta',     href: '/recetas' },
-  { key: 'menuReceta'  as const, label: 'Agrégala a un menú',         href: '/menus' },
+  { key: 'menuReceta'  as const, label: 'Crea tu primer menú',         href: '/menus' },
 ]
 
 export default function OnboardingChecklist({ pasos }: { pasos: Pasos }) {

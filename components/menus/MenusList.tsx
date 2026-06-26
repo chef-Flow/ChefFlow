@@ -83,6 +83,7 @@ export default function MenusList({ initialMenus, plan }: Props) {
       }
 
       setLoading(false); setIsCreateOpen(false); resetForm()
+      router.refresh()
       router.push(`/menus/${newMenu.id}`)
     }
   }

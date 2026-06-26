@@ -42,20 +42,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           supabase.from('menus').select('id').eq('user_id', user.id),
         ])
 
-        const menuIds = (menusRes.data ?? []).map((m: any) => m.id)
-        let menuRecetaCount = 0
-        if (menuIds.length > 0) {
-          const { count } = await supabase
-            .from('menu_recetas')
-            .select('id', { count: 'exact', head: true })
-            .in('menu_id', menuIds)
-          menuRecetaCount = count ?? 0
-        }
+        const menusCount = (menusRes.data ?? []).length
 
         const pasos = {
           ingrediente: (ingRes.count ?? 0) > 0,
           receta:      (recRes.count ?? 0) > 0,
-          menuReceta:  menuRecetaCount > 0,
+          menuReceta:  menusCount > 0,
         }
 
         // Usuario sin fila en onboarding que ya tiene todo hecho →
