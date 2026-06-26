@@ -9,7 +9,7 @@ import Modal from '@/components/ui/Modal'
 import PaywallModal from '@/components/paywall/PaywallModal'
 import type { MenuConRecetas } from '@/types'
 import { MENU_COLORS } from '@/types'
-import { crearMenu } from '@/app/(dashboard)/menus/actions'
+import { crearMenu, eliminarMenu } from '@/app/(dashboard)/menus/actions'
 
 interface Props {
   initialMenus: MenuConRecetas[]
@@ -83,8 +83,8 @@ export default function MenusList({ initialMenus, plan }: Props) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Eliminar este menú? Las recetas no se borrarán.')) return
-    await supabase.from('menus').delete().eq('id', id)
     setMenus(ms => ms.filter(m => m.id !== id))
+    await eliminarMenu(id)
   }
 
   return (

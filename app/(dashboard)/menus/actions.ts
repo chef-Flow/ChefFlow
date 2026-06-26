@@ -20,7 +20,12 @@ export async function crearMenu(
 
   if (error || !data) return { ok: false, error: 'No se pudo crear el menú.' }
 
-  // Invalida el layout para que el onboarding checklist se actualice
   revalidatePath('/', 'layout')
   return { ok: true, menuId: data.id }
+}
+
+export async function eliminarMenu(id: string): Promise<void> {
+  const supabase = await createClient()
+  await supabase.from('menus').delete().eq('id', id)
+  revalidatePath('/', 'layout')
 }
