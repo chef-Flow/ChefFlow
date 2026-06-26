@@ -17,6 +17,9 @@ export async function signUpWithTerminos(
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://chefflow.mx'}/auth/callback`,
+    },
   })
 
   if (error) return { ok: false, error: error.message }
