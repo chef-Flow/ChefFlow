@@ -119,8 +119,8 @@ ${content}
         </div>
         <div style="padding:10px 14px;">
           <table style="width:100%;border-collapse:collapse;">
-            <tr><td style="font-size:12px;color:#475569;padding:3px 0;">IVA (${iva}%)</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.ivaMonto)}</td></tr>
-            <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Precio sin IVA</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.sinIva)}</td></tr>
+            <tr><td style="font-size:12px;color:#475569;padding:3px 0;">IVA / VAT / Tax (${iva}%)</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.ivaMonto)}</td></tr>
+            <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Precio sin IVA / VAT / Tax</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.sinIva)}</td></tr>
             <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Costo por porción (${pct(margen.costosPct)})</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(costoPorcion)}</td></tr>
             <tr><td style="font-size:12px;color:#475569;padding:3px 0;">Margen bruto</td><td style="font-size:12px;text-align:right;color:#475569;">${fmt(margen.margenPesos)}</td></tr>
             ${margen.pctBancaria ? `<tr><td style="font-size:12px;color:#475569;padding:3px 0;">Comisión bancaria (${pct(margen.pctBancaria || 0)})</td><td style="font-size:12px;text-align:right;color:#dc2626;">−${fmt(margen.despuésBancaria || 0)}</td></tr>` : ''}

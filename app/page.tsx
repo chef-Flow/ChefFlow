@@ -85,7 +85,7 @@ export default function LandingPage() {
               {
                 icon: <TrendingUp className="text-brand-500" size={28} />,
                 title: 'Margen de ganancia real',
-                desc: 'Conoce tu margen real incluyendo IVA, comisiones bancarias y plataformas de delivery como Uber Eats o DiDi Food.',
+                desc: 'Conoce tu margen real incluyendo IVA / VAT / Tax, comisiones bancarias y plataformas de delivery como Uber Eats o DiDi Food.',
               },
               {
                 icon: <Brain className="text-brand-500" size={28} />,
@@ -137,7 +137,7 @@ export default function LandingPage() {
                   'PDF de tus 3 recetas',
                   'Proveedores y comisión bancaria',
                   'Plataformas de delivery',
-                  'IVA configurable',
+                  'IVA / VAT / Tax configurable',
                   '1 colaborador solo lectura',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">

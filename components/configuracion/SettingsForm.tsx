@@ -291,14 +291,14 @@ export default function SettingsForm({
           </div>
           <div className="px-6 py-5 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Porcentaje de IVA (%)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Porcentaje de IVA / VAT / Tax (%)</label>
               <div className="flex items-center gap-3">
                 <input type="number" value={iva} onChange={e => setIva(e.target.value)}
                   min="0" max="100" step="0.1" className={inputClass} />
                 <span className="text-sm text-slate-500 whitespace-nowrap">% de impuesto</span>
               </div>
               <p className="text-xs text-slate-400 mt-1.5">
-                Se usa para calcular el precio sin IVA.{' '}
+                Se usa para calcular el precio sin IVA / VAT / Tax.{' '}
                 <span className="font-medium text-slate-500">Por defecto: 16%</span>
               </p>
             </div>

@@ -758,7 +758,7 @@ export default function AnalisisDashboard({ recetas, iva, margenMinimo, comision
                   <p className="text-xs text-slate-400 mt-1">ej: $100 → {fmt(100 * (1 + Number(valorAjuste) / 100))}</p>
                 )}
                 {modoAjuste === 'margen' && valorAjuste && (
-                  <p className="text-xs text-slate-400 mt-1">Recalcula precio con IVA {iva}% incluido.</p>
+                  <p className="text-xs text-slate-400 mt-1">Recalcula precio con IVA / VAT / Tax {iva}% incluido.</p>
                 )}
               </div>
               <button
