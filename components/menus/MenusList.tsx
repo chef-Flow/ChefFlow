@@ -27,7 +27,7 @@ export default function MenusList({ initialMenus, plan }: Props) {
   const [errMsg, setErrMsg]             = useState<string | null>(null)
   const router  = useRouter()
   const supabase = createClient()
-  const canCreateMenu = plan === 'basic' || plan === 'pro'
+  const canCreateMenu = plan === 'basic' || plan === 'pro' || menus.length < 1
 
   const resetForm = () => { setNombre(''); setDescripcion(''); setColor(MENU_COLORS[0]); setErrMsg(null) }
 
