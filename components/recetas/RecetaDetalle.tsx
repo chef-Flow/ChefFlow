@@ -19,6 +19,7 @@ import {
 } from '@/app/(dashboard)/recetas/[id]/actions'
 import PrintModal from './PrintModal'
 import CompartirRecetaModal from './CompartirRecetaModal'
+import QuickIngredienteModal from './QuickIngredienteModal'
 import ComboBox from '@/components/ui/ComboBox'
 import type { Ingrediente, Receta, PlataformaDelivery } from '@/types'
 
@@ -72,11 +73,12 @@ function isStale(iso: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RecetaDetalle({
-  receta: recetaInit, ingredientesReceta, ingredientesDisponibles,
+  receta: recetaInit, ingredientesReceta, ingredientesDisponibles: ingredientesIniciales,
   subRecetasDisponibles, plataformasDelivery, iva, margenMinimo, comisionBancaria, plan,
 }: Props) {
   const [receta, setReceta]         = useState(recetaInit)
   const [rows, setRows]             = useState<IngRow[]>(ingredientesReceta)
+  const [ingredientesDisponibles, setIngredientesDisponibles] = useState<Ingrediente[]>(ingredientesIniciales)
   const [editingHeader, setEditingHeader] = useState(false)
   const [nombreEdit, setNombreEdit] = useState(receta.nombre)
   const [porcionesEdit, setPorcionesEdit] = useState(String(receta.porciones))
@@ -105,6 +107,9 @@ export default function RecetaDetalle({
 
   // Ref solo para el ComboBox (retorno de foco tras agregar)
   const comboRef = useRef<HTMLInputElement>(null)
+
+  // Quick-create ingrediente inline
+  const [quickCreateQuery, setQuickCreateQuery] = useState<string | null>(null)
 
   const isLocked = false
   const canAddPhoto = plan === 'basic' || plan === 'pro'
@@ -560,6 +565,7 @@ export default function RecetaDetalle({
                     minChars={1}
                     maxResults={12}
                     tabIndex={1}
+                    onCreateNew={q => setQuickCreateQuery(q)}
                   />
                 </div>
                 <div>
@@ -963,6 +969,20 @@ export default function RecetaDetalle({
           recetaId={receta.id}
           recetaNombre={receta.nombre}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Quick create ingrediente */}
+      {quickCreateQuery !== null && (
+        <QuickIngredienteModal
+          nombreInicial={quickCreateQuery}
+          onCerrar={() => setQuickCreateQuery(null)}
+          onCreado={ing => {
+            setIngredientesDisponibles(prev => [...prev, ing])
+            setAddSelId(`ing:${ing.id}`)
+            setQuickCreateQuery(null)
+            setTimeout(() => document.getElementById('r-cantidad')?.focus(), 50)
+          }}
         />
       )}
     </>

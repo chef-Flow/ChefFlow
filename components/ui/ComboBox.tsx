@@ -4,7 +4,7 @@ import {
   useState, useRef, useEffect,
   KeyboardEvent, forwardRef, useImperativeHandle,
 } from 'react'
-import { ChevronDown, Search } from 'lucide-react'
+import { ChevronDown, Search, Plus } from 'lucide-react'
 
 export interface ComboOption {
   value: string
@@ -28,10 +28,12 @@ interface Props {
   /** Max number of suggestions shown (default unlimited) */
   maxResults?: number
   tabIndex?: number
+  /** If provided, shows a "+ Crear…" button when no results match */
+  onCreateNew?: (query: string) => void
 }
 
 const ComboBox = forwardRef<HTMLInputElement, Props>(function ComboBox(
-  { options, value, onChange, onConfirm, placeholder = 'Buscar...', className = '', disabled, minChars = 0, maxResults, tabIndex },
+  { options, value, onChange, onConfirm, placeholder = 'Buscar...', className = '', disabled, minChars = 0, maxResults, tabIndex, onCreateNew },
   ref,
 ) {
   const [query, setQuery]         = useState('')
@@ -162,8 +164,19 @@ const ComboBox = forwardRef<HTMLInputElement, Props>(function ComboBox(
       )}
 
       {showEmpty && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow p-3 text-sm text-slate-400 text-center">
-          Sin resultados para &ldquo;{query}&rdquo;
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow overflow-hidden">
+          <p className="px-3 py-2.5 text-sm text-slate-400 text-center border-b border-slate-100">
+            Sin resultados para &ldquo;{query}&rdquo;
+          </p>
+          {onCreateNew && (
+            <button
+              onMouseDown={e => { e.preventDefault(); onCreateNew(queryTrimmed); setOpen(false) }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+            >
+              <Plus size={14} />
+              Crear &ldquo;{queryTrimmed}&rdquo;
+            </button>
+          )}
         </div>
       )}
     </div>
