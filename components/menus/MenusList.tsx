@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal'
 import PaywallModal from '@/components/paywall/PaywallModal'
 import type { MenuConRecetas } from '@/types'
 import { MENU_COLORS } from '@/types'
+import { crearMenu } from '@/app/(dashboard)/menus/actions'
 
 interface Props {
   initialMenus: MenuConRecetas[]
@@ -67,24 +68,16 @@ export default function MenusList({ initialMenus, plan }: Props) {
       setLoading(false); setIsCreateOpen(false); resetForm(); setEditingMenu(null)
 
     } else {
-      // ── Create new menu → redirect to detail ──────────────────────────────
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setErrMsg('Sin sesión activa.'); setLoading(false); return }
+      // ── Create new menu via server action → revalidates layout ────────────
+      const result = await crearMenu(nombre.trim(), descripcion.trim() || null, color)
 
-      const { data: newMenu, error } = await supabase.from('menus')
-        .insert({ user_id: user.id, nombre: nombre.trim(), descripcion: descripcion.trim() || null, color })
-        .select('id')
-        .single()
-
-      if (error || !newMenu) {
-        console.error('Menu insert error:', error)
-        setErrMsg('No se pudo crear el menú. Verifica tu conexión e intenta de nuevo.')
+      if (!result.ok) {
+        setErrMsg(result.error)
         setLoading(false); return
       }
 
       setLoading(false); setIsCreateOpen(false); resetForm()
-      router.refresh()
-      router.push(`/menus/${newMenu.id}`)
+      router.push(`/menus/${result.menuId}`)
     }
   }
 
