@@ -260,7 +260,10 @@ export default function LandingPage() {
           <Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link>
           <Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link>
           <Link href="/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
+          <Link href="/arco" className="hover:text-white transition-colors">Aviso ARCO</Link>
           <Link href="/terminos" className="hover:text-white transition-colors">Términos</Link>
+          <Link href="/reembolsos" className="hover:text-white transition-colors">Reembolsos</Link>
+          <Link href="/cancelacion" className="hover:text-white transition-colors">Cancelación</Link>
           <Link href="/cumplimiento" className="hover:text-white transition-colors">Cumplimiento</Link>
         </div>
         <p>© 2025 ChefFlow · Todos los derechos reservados · Guadalajara, México</p>

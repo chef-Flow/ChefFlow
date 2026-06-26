@@ -21,9 +21,12 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       </main>
 
       <footer className="border-t border-slate-100 py-6 px-4 text-center text-sm text-slate-400">
-        <div className="flex justify-center gap-6 mb-2">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-2">
           <Link href="/privacidad" className="hover:text-brand-600 transition-colors">Privacidad</Link>
+          <Link href="/arco" className="hover:text-brand-600 transition-colors">Aviso ARCO</Link>
           <Link href="/terminos" className="hover:text-brand-600 transition-colors">Términos</Link>
+          <Link href="/reembolsos" className="hover:text-brand-600 transition-colors">Reembolsos</Link>
+          <Link href="/cancelacion" className="hover:text-brand-600 transition-colors">Cancelación</Link>
           <Link href="/cumplimiento" className="hover:text-brand-600 transition-colors">Cumplimiento</Link>
         </div>
         <p>© 2025 ChefFlow · Todos los derechos reservados</p>
