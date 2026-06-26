@@ -102,6 +102,17 @@ export default function OnboardingChecklist({ pasos }: { pasos: Pasos }) {
                 />
               </div>
             </div>
+
+            {/* ── Omitir ── */}
+            <button
+              onClick={() => {
+                markOnboardingComplete()
+                setHidden(true)
+              }}
+              className="mt-3 w-full text-xs text-slate-400 hover:text-slate-600 transition-colors py-1"
+            >
+              Omitir tutorial
+            </button>
           </>
         )}
       </div>
