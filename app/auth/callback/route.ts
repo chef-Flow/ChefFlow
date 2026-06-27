@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/reset-password', baseUrl))
   }
 
-  // Destino seguro: solo rutas internas
-  const redirectTo = next.startsWith('/') ? next : '/analisis'
+  // Destino seguro: solo rutas internas (rechaza //host y URLs absolutas)
+  const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/analisis'
   return NextResponse.redirect(new URL(redirectTo, baseUrl))
 }

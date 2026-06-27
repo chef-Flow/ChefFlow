@@ -85,10 +85,13 @@ export async function syncCostoSubreceta(
   costo_total: number,
 ): Promise<void> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
   await supabase
     .from('sub_recetas')
     .update({ costo_total })
     .eq('id', sub_receta_id)
+    .eq('user_id', user.id)
   revalidatePath(`/sub-recetas/${sub_receta_id}`)
   revalidatePath('/sub-recetas')
   revalidatePath('/analisis')

@@ -51,8 +51,20 @@ export async function invitarColaborador(
 
   const emailLower = email.trim().toLowerCase()
 
-  // Usar admin para el insert y leer el token generado
   const admin = getAdmin()
+
+  // Rate limit: max 10 invitaciones por hora por usuario
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: recentInvites } = await admin
+    .from('colaboradores')
+    .select('id', { count: 'exact', head: true })
+    .eq('propietario_id', user.id)
+    .gte('created_at', oneHourAgo)
+  if ((recentInvites ?? 0) >= 10) {
+    return { ok: false, error: 'Has enviado demasiadas invitaciones. Intenta de nuevo en una hora.' }
+  }
+
+  // Usar admin para el insert y leer el token generado
   const { data: inserted, error: insertError } = await admin
     .from('colaboradores')
     .insert({ propietario_id: user.id, email: emailLower })

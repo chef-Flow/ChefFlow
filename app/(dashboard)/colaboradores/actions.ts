@@ -270,12 +270,25 @@ export async function actualizarPrecioCompartido(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'No autenticado' }
 
-  const { error } = await supabase
+  // Verify the caller is a collaborator with edit permission on this recipe
+  const { data: perm } = await supabase
+    .from('recetas_compartidas')
+    .select('id')
+    .eq('receta_id', recetaId)
+    .eq('receptor_user_id', user.id)
+    .eq('puede_editar', true)
+    .neq('estado', 'revocado')
+    .maybeSingle()
+
+  if (!perm) return { ok: false, error: 'Sin permiso para editar esta receta' }
+
+  const admin = getAdmin()
+  const { error } = await admin
     .from('recetas')
     .update({ precio_venta: precioVenta })
     .eq('id', recetaId)
 
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: 'No se pudo actualizar el precio.' }
   revalidatePath('/compartido')
   return { ok: true }
 }

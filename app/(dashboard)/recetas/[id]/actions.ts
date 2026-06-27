@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { fotoUrlSchema } from '@/lib/validations'
 
 interface IngredienteRecetaPayload {
   receta_id: string
@@ -30,7 +31,7 @@ export async function insertIngredienteReceta(
 
   if (error) {
     console.error('[insertIngredienteReceta]', error.code, error.message, error.details)
-    return { id: null, error: `[${error.code}] ${error.message}${error.details ? ' — ' + error.details : ''}` }
+    return { id: null, error: 'No se pudo agregar el ingrediente. Intenta de nuevo.' }
   }
 
   revalidatePath(`/recetas/${payload.receta_id}`)
@@ -53,7 +54,7 @@ export async function updateIngredienteReceta(
 
   if (error) {
     console.error('[updateIngredienteReceta]', error.code, error.message, error.details)
-    return { ok: false, error: `[${error.code}] ${error.message}${error.details ? ' — ' + error.details : ''}` }
+    return { ok: false, error: 'No se pudo actualizar el ingrediente. Intenta de nuevo.' }
   }
 
   revalidatePath(`/recetas/${receta_id}`)
@@ -75,7 +76,7 @@ export async function deleteIngredienteReceta(
 
   if (error) {
     console.error('[deleteIngredienteReceta]', error.code, error.message)
-    return { ok: false, error: `[${error.code}] ${error.message}` }
+    return { ok: false, error: 'No se pudo eliminar el ingrediente. Intenta de nuevo.' }
   }
 
   revalidatePath(`/recetas/${receta_id}`)
@@ -88,10 +89,13 @@ export async function syncCostosReceta(
   costo_por_porcion: number,
 ): Promise<void> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
   await supabase
     .from('recetas')
     .update({ costo_total, costo_por_porcion })
     .eq('id', receta_id)
+    .eq('user_id', user.id)
   revalidatePath(`/recetas/${receta_id}`)
   revalidatePath('/recetas')
   revalidatePath('/analisis')
@@ -123,6 +127,9 @@ export async function saveFotoUrl(
   receta_id: string,
   foto_url: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const parsed = fotoUrlSchema.safeParse(foto_url)
+  if (!parsed.success) return { ok: false, error: 'URL de foto inválida.' }
+
   const supabase = await createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return { ok: false, error: 'No autenticado' }

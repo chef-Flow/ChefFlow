@@ -26,6 +26,8 @@ export async function crearMenu(
 
 export async function eliminarMenu(id: string): Promise<void> {
   const supabase = await createClient()
-  await supabase.from('menus').delete().eq('id', id)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('menus').delete().eq('id', id).eq('user_id', user.id)
   revalidatePath('/', 'layout')
 }

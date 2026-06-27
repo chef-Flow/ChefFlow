@@ -52,6 +52,17 @@ export async function compartirReceta(
 
   const admin = getAdmin()
 
+  // Rate limit: max 20 comparticiones por hora por usuario
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: recentShares } = await admin
+    .from('recetas_compartidas')
+    .select('id', { count: 'exact', head: true })
+    .eq('propietario_id', user.id)
+    .gte('created_at', oneHourAgo)
+  if ((recentShares ?? 0) >= 20) {
+    return { ok: false, error: 'Has compartido demasiadas recetas recientemente. Intenta en una hora.' }
+  }
+
   // Crear o actualizar el registro de compartición
   const { data: share, error: shareError } = await admin
     .from('recetas_compartidas')
@@ -128,10 +139,13 @@ export async function revocarRecetaCompartida(
 
 export async function marcarRecetaVista(shareId: string): Promise<void> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
   await supabase
     .from('recetas_compartidas')
     .update({ vista: true })
     .eq('id', shareId)
+    .eq('receptor_user_id', user.id)
     .eq('vista', false)
 }
 
@@ -351,6 +365,19 @@ export async function getSharesDeSubReceta(subRecetaId: string): Promise<
     created_at: string
   }>
 > {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  // Verify ownership of the sub_receta before exposing its shares
+  const { data: owned } = await supabase
+    .from('sub_recetas')
+    .select('id')
+    .eq('id', subRecetaId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (!owned) return []
+
   const admin = getAdmin()
   try {
     const r = await (admin as any)
