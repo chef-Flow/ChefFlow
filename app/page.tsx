@@ -60,7 +60,6 @@ export default function LandingPage() {
               Iniciar sesión
             </Link>
           </div>
-          <p className="text-brand-200 text-sm mt-6">Sin tarjeta de crédito · Gratis para siempre en el plan básico</p>
         </div>
       </section>
 
@@ -246,7 +245,6 @@ export default function LandingPage() {
           >
             Crear cuenta gratis →
           </Link>
-          <p className="text-brand-200 text-sm mt-5">Sin tarjeta de crédito · Cancela cuando quieras</p>
         </div>
       </section>
 
