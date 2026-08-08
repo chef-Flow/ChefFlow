@@ -1,5 +1,3 @@
-import { createServerClient } from '@supabase/ssr'
-import type { CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // In-memory rate limit store — resets on cold start (Edge/Node restarts)
@@ -26,7 +24,25 @@ function getIP(request: NextRequest): string {
   )
 }
 
-export async function middleware(request: NextRequest) {
+// Referencia del proyecto Supabase, extraída de la URL (sin llamadas de red).
+// El SDK guarda la sesión en cookies con nombre `sb-<ref>-auth-token`
+// (o `sb-<ref>-auth-token.0`, `.1`, ... si el valor se fragmenta por tamaño).
+const SUPABASE_PROJECT_REF = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+  /^https:\/\/([^.]+)\.supabase\.co/
+)?.[1]
+const AUTH_COOKIE_PREFIX = SUPABASE_PROJECT_REF ? `sb-${SUPABASE_PROJECT_REF}-auth-token` : null
+
+// Presencia de la cookie de sesión, sin validar su firma ni llamar a Supabase.
+// Es solo una señal para decidir redirects de UX; la verificación real ocurre
+// en cada página/layout del dashboard vía `supabase.auth.getUser()` server-side.
+function hasSessionCookie(request: NextRequest): boolean {
+  if (!AUTH_COOKIE_PREFIX) return false
+  return request.cookies.getAll().some(
+    (c) => c.name === AUTH_COOKIE_PREFIX || c.name.startsWith(`${AUTH_COOKIE_PREFIX}.`)
+  )
+}
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = getIP(request)
 
@@ -51,30 +67,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let supabaseResponse = NextResponse.next({ request })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const hasSession = hasSessionCookie(request)
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/registro')
   const isPublicRoute =
@@ -89,13 +82,13 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth/')
 
-  if (!user && !isAuthRoute && !isPublicRoute) {
+  if (!hasSession && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute) {
+  if (hasSession && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/ingredientes'
     return NextResponse.redirect(url)
@@ -103,13 +96,13 @@ export async function middleware(request: NextRequest) {
 
   // Usuario autenticado en landing → dashboard
   // Cubre el caso donde Supabase redirige a la Site URL en vez del callback
-  if (user && pathname === '/') {
+  if (hasSession && pathname === '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/analisis'
     return NextResponse.redirect(url)
   }
 
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {
