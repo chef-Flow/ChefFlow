@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import RecetaDetalle from '@/components/recetas/RecetaDetalle'
 import type { Ingrediente, Receta, PlataformaDelivery } from '@/types'
@@ -28,7 +28,7 @@ export default async function RecetaDetallePage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const [recetaRes, ingRes, ingredientesRes, subRecetasRes, profileRes, plataformasRes] =

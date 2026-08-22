@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ColaboradoresList from '@/components/colaboradores/ColaboradoresList'
 import type { Colaborador, ColaboradorMenu, Menu } from '@/types'
@@ -11,7 +11,7 @@ interface ColabWithPerms extends Colaborador {
 
 export default async function ColaboradoresPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const [colabsRes, menusRes, profileRes] = await Promise.all([

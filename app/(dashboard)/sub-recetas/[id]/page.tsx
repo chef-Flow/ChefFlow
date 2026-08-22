@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import SubRecetaDetalle from '@/components/subrecetas/SubRecetaDetalle'
 import type { Ingrediente, SubReceta } from '@/types'
@@ -25,7 +25,7 @@ export default async function SubRecetaDetallePage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const [srRes, ingRes, disponiblesRes, profileRes] = await Promise.all([

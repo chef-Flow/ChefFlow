@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import MenuDetalle from '@/components/menus/MenuDetalle'
 import type { Menu, Receta, SubReceta } from '@/types'
@@ -10,7 +10,7 @@ export default async function MenuDetallePage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   // Run all queries in parallel

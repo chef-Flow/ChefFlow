@@ -1,12 +1,12 @@
 export const dynamic = 'force-dynamic'
 
 import { CheckCircle } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 export default async function UpgradeSuccessPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase

@@ -1,39 +1,45 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
 import MobileHeader from '@/components/layout/MobileHeader'
 import OnboardingChecklist from '@/components/onboarding/OnboardingChecklist'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (user?.email) {
-    const emailLower = user.email.toLowerCase().trim()
-    await supabase
-      .from('colaboradores')
-      .update({ colaborador_user_id: user.id, estado: 'activo' })
-      .eq('email', emailLower)
-      .eq('estado', 'pendiente')
-    // Tabla puede no existir aún — ignorar error sin crashear el layout
-    await (supabase as any)
-      .from('recetas_compartidas')
-      .update({ receptor_user_id: user.id, estado: 'activo' })
-      .eq('receptor_email', emailLower)
-      .eq('estado', 'pendiente')
-      .then(() => {}).catch(() => {})
-  }
+  const { data: { user } } = await getUser()
 
   // ── Onboarding checklist ─────────────────────────────────────────────────
   // Solo se calcula si hay usuario y no ha completado el onboarding todavía.
   let onboardingPasos: { ingrediente: boolean; receta: boolean; menuReceta: boolean } | null = null
 
   if (user) {
+    const emailLower = user.email?.toLowerCase().trim()
+
     try {
-      const { data: checklist } = await (supabase as any)
-        .from('onboarding_checklist')
-        .select('completado')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Estas tres consultas son independientes entre sí — se corren en
+      // paralelo en vez de una tras otra para no encadenar round-trips.
+      const [, , { data: checklist }] = await Promise.all([
+        emailLower
+          ? supabase
+              .from('colaboradores')
+              .update({ colaborador_user_id: user.id, estado: 'activo' })
+              .eq('email', emailLower)
+              .eq('estado', 'pendiente')
+          : Promise.resolve(null),
+        // Tabla puede no existir aún — ignorar error sin crashear el layout
+        emailLower
+          ? (supabase as any)
+              .from('recetas_compartidas')
+              .update({ receptor_user_id: user.id, estado: 'activo' })
+              .eq('receptor_email', emailLower)
+              .eq('estado', 'pendiente')
+              .then(() => {}).catch(() => {})
+          : Promise.resolve(null),
+        (supabase as any)
+          .from('onboarding_checklist')
+          .select('completado')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+      ])
 
       if (!checklist?.completado) {
         const [ingRes, recRes, menusRes] = await Promise.all([

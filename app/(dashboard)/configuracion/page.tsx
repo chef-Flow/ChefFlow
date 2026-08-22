@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SettingsForm from '@/components/configuracion/SettingsForm'
 import type { PlataformaDelivery } from '@/types'
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ConfiguracionPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const [profileRes, plataformasRes] = await Promise.all([

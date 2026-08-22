@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { aceptarInvitacionesPendientes } from '@/app/(dashboard)/colaboradores/actions'
@@ -15,8 +15,7 @@ function getAdmin() {
 }
 
 export default async function CompartidoPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   // Auto-aceptar invitaciones pendientes de ambos sistemas
