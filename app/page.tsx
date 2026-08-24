@@ -1,10 +1,28 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import AppLogo from '@/components/ui/AppLogo'
 import { CheckCircle2, TrendingUp, Brain, DollarSign } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string; next?: string; type?: string }>
+}) {
+  // Supabase a veces regresa el ?code= del login con Google a la Site URL
+  // (esta landing) en vez de /auth/callback, si esa URL no está en la
+  // lista de Redirect URLs del proyecto. Lo reenviamos para que sí se
+  // intercambie por una sesión en vez de mostrar la landing sin loguear.
+  const params = await searchParams
+  if (params.code) {
+    const qs = new URLSearchParams()
+    qs.set('code', params.code)
+    if (params.next) qs.set('next', params.next)
+    if (params.type) qs.set('type', params.type)
+    redirect(`/auth/callback?${qs.toString()}`)
+  }
+
   return (
     <div className="min-h-screen bg-white">
 
