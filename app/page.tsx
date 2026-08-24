@@ -230,6 +230,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Recursos extra — Whop */}
+      <section className="py-20 px-4 sm:px-6 bg-slate-50">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">
+            Más recursos para tu restaurante
+          </h2>
+          <p className="text-slate-500 text-lg mb-8 leading-relaxed">
+            Contratos laborales listos para usar, ingeniería de menú y kits de operación para tu equipo — disponibles en nuestra tienda de Whop.
+          </p>
+          <a
+            href="https://whop.com/chefflow-mx/products"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-8 py-4 bg-slate-900 text-white font-bold text-base rounded-xl hover:bg-slate-800 transition-colors shadow-lg"
+          >
+            Ver productos en Whop →
+          </a>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-24 px-4 sm:px-6 bg-brand-600 text-white text-center">
         <div className="max-w-2xl mx-auto">
