@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import AppLogo from '@/components/ui/AppLogo'
+import ProPricingCard from '@/components/landing/ProPricingCard'
 import { CheckCircle2, TrendingUp, Brain, DollarSign } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -211,49 +212,7 @@ export default async function LandingPage({
             </div>
 
             {/* Pro */}
-            <div className="rounded-2xl border border-slate-200 p-8 bg-slate-50">
-              <div className="mb-7">
-                <h3 className="text-base font-bold text-slate-500 uppercase tracking-wide mb-3">Pro</h3>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900">$699</span>
-                </div>
-                <div className="text-sm text-slate-400 mt-1">MXN / mes</div>
-                <div className="text-xs text-brand-600 font-medium mt-2">
-                  o $7,000 MXN/año (~$583/mes) · ahorra 17%
-                </div>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  'Todo lo del plan Básico',
-                  'PDF completo con opciones',
-                  'Colaboradores ilimitados',
-                  'Permisos de edición por colaborador',
-                  'Ajuste de precios masivo por menú',
-                  'Análisis comparativo entre menús',
-                  'Alertas de subida de precios',
-                  'Exportar a Excel',
-                ].map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <CheckCircle2 size={15} className="text-brand-500 mt-0.5 flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="space-y-2">
-                <Link
-                  href="/registro?plan=pro"
-                  className="block w-full text-center py-3 border-2 border-brand-600 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm"
-                >
-                  Empezar mensual
-                </Link>
-                <Link
-                  href="/registro?plan=pro&billing=annual"
-                  className="block w-full text-center py-2 text-brand-600 font-semibold text-sm hover:underline"
-                >
-                  Empezar anual — ahorra 17% →
-                </Link>
-              </div>
-            </div>
+            <ProPricingCard />
 
           </div>
         </div>
