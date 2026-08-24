@@ -122,13 +122,13 @@ export default function PaywallModal({ isOpen, onClose, requiredPlan, message, t
             <PlanCard
               planKey="basic"
               nombre="Básico"
-              precio="$299"
+              precio="$349"
               icon={Zap}
               beneficios={[
                 'Recetas y sub-recetas ilimitadas',
                 'Menús ilimitados',
                 'Foto del platillo',
-                'PDF con privacidad',
+                'Exportar ingredientes por categoría',
                 '1 colaborador solo lectura',
               ]}
             />
@@ -136,19 +136,21 @@ export default function PaywallModal({ isOpen, onClose, requiredPlan, message, t
           <PlanCard
             planKey="pro"
             nombre="Pro"
-            precio="$499"
+            precio="$699"
             icon={Crown}
             highlighted
             beneficios={
               showBothPlans
                 ? [
                     'Todo lo del Básico',
+                    'PDF completo con opciones',
                     'Colaboradores con edición',
                     'Análisis comparativo de menús',
                     'Ajuste masivo de precios',
                     'Exportar a Excel',
                   ]
                 : [
+                    'PDF completo con opciones',
                     'Colaboradores ilimitados con edición',
                     'Ajuste de precios masivo por menú',
                     'Análisis comparativo entre menús',

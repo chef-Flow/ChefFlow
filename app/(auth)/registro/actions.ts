@@ -7,18 +7,22 @@ import { signUpSchema } from '@/lib/validations'
 export async function signUpWithTerminos(
   email: string,
   password: string,
+  plan?: 'basic' | 'pro',
 ): Promise<{ ok: boolean; error?: string }> {
   const parsed = signUpSchema.safeParse({ email, password })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://chefflow.mx'
+  const next = plan === 'basic' || plan === 'pro' ? `/upgrade?plan=${plan}` : '/analisis'
+
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://chefflow.mx'}/auth/callback`,
+      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   })
 

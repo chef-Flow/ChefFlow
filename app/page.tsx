@@ -203,7 +203,7 @@ export default async function LandingPage({
                 ))}
               </ul>
               <Link
-                href="/registro"
+                href="/registro?plan=basic"
                 className="block w-full text-center py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors text-sm shadow-sm"
               >
                 Empezar
@@ -240,7 +240,7 @@ export default async function LandingPage({
                 ))}
               </ul>
               <Link
-                href="/registro"
+                href="/registro?plan=pro"
                 className="block w-full text-center py-3 border-2 border-brand-600 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm"
               >
                 Empezar

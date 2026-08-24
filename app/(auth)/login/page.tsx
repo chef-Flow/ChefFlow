@@ -30,6 +30,10 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const supabase     = createClient()
 
+  const planParam = searchParams.get('plan')
+  const plan: 'basic' | 'pro' | undefined = planParam === 'basic' || planParam === 'pro' ? planParam : undefined
+  const nextPath = plan ? `/upgrade?plan=${plan}` : '/analisis'
+
   useEffect(() => {
     const err = searchParams.get('error')
     if (err) setError(err)
@@ -47,7 +51,7 @@ function LoginForm() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError('Correo o contraseña incorrectos.')
-      else { router.push('/analisis'); router.refresh() }
+      else { router.push(nextPath); router.refresh() }
     }
 
     setLoading(false)
@@ -58,7 +62,7 @@ function LoginForm() {
     setGoogleLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
     })
     if (error) {
       setError('No se pudo conectar con Google. Intenta de nuevo.')

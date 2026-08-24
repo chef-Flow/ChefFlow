@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import AppLogo from '@/components/ui/AppLogo'
 import { createClient } from '@/lib/supabase/client'
@@ -18,7 +19,17 @@ function GoogleIcon() {
   )
 }
 
-export default function RegistroPage() {
+const PLAN_LABEL: Record<'basic' | 'pro', string> = {
+  basic: 'Básico',
+  pro:   'Pro',
+}
+
+function RegistroForm() {
+  const searchParams = useSearchParams()
+  const planParam = searchParams.get('plan')
+  const plan: 'basic' | 'pro' | undefined = planParam === 'basic' || planParam === 'pro' ? planParam : undefined
+  const loginHref = plan ? `/login?plan=${plan}` : '/login'
+
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -34,7 +45,7 @@ export default function RegistroPage() {
     if (!aceptaTerminos) return
     setError(null)
     setLoading(true)
-    const result = await signUpWithTerminos(email, password)
+    const result = await signUpWithTerminos(email, password, plan)
     if (!result.ok) setError(result.error ?? 'Error al crear la cuenta.')
     else setSuccess(true)
     setLoading(false)
@@ -47,10 +58,11 @@ export default function RegistroPage() {
     }
     setError(null)
     setGoogleLoading(true)
+    const next = plan ? `/upgrade?plan=${plan}` : '/analisis'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
     if (error) {
@@ -68,10 +80,12 @@ export default function RegistroPage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Cuenta creada</h2>
           <p className="text-slate-500 text-sm mb-6">
-            Revisa tu correo para confirmar tu cuenta y luego inicia sesión.
+            Revisa tu correo para confirmar tu cuenta{plan
+              ? ` — después te llevaremos a completar el pago del Plan ${PLAN_LABEL[plan]}.`
+              : ' y luego inicia sesión.'}
           </p>
           <Link
-            href="/login"
+            href={loginHref}
             className="block w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors text-center"
           >
             Ir a iniciar sesión
@@ -89,7 +103,14 @@ export default function RegistroPage() {
             <div className="flex justify-center mb-4">
               <AppLogo size={72} />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Crea tu cuenta gratis</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {plan ? `Crea tu cuenta — Plan ${PLAN_LABEL[plan]}` : 'Crea tu cuenta gratis'}
+            </h1>
+            {plan && (
+              <p className="text-sm text-slate-500 mt-1.5">
+                Después de confirmar tu cuenta, pagas y quedas activo de inmediato.
+              </p>
+            )}
           </div>
 
           {error && (
@@ -170,17 +191,25 @@ export default function RegistroPage() {
               disabled={loading || !aceptaTerminos || googleLoading}
               className="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mt-2"
             >
-              {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
+              {loading ? 'Creando cuenta...' : plan ? `Crear cuenta — Plan ${PLAN_LABEL[plan]}` : 'Crear cuenta gratis'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/login" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
+            <Link href={loginHref} className="text-sm text-brand-600 hover:text-brand-700 font-medium">
               ¿Ya tienes cuenta? Inicia sesión
             </Link>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <RegistroForm />
+    </Suspense>
   )
 }
