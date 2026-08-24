@@ -65,13 +65,13 @@ export async function GET(request: NextRequest) {
   // pantalla de registro/login guardó en una cookie antes de arrancar el
   // login con Google o el signup por correo.
   const pendingPlan = cookieStore.get('cf_pending_plan')?.value
+  const pendingBilling = cookieStore.get('cf_pending_billing')?.value
   if (redirectTo === '/analisis' && (pendingPlan === 'basic' || pendingPlan === 'pro')) {
-    redirectTo = `/upgrade?plan=${pendingPlan}`
+    redirectTo = `/upgrade?plan=${pendingPlan}${pendingPlan === 'pro' && pendingBilling === 'annual' ? '&billing=annual' : ''}`
   }
 
   const response = NextResponse.redirect(new URL(redirectTo, baseUrl))
-  if (pendingPlan) {
-    response.cookies.set('cf_pending_plan', '', { maxAge: 0, path: '/' })
-  }
+  if (pendingPlan)    response.cookies.set('cf_pending_plan', '', { maxAge: 0, path: '/' })
+  if (pendingBilling) response.cookies.set('cf_pending_billing', '', { maxAge: 0, path: '/' })
   return response
 }

@@ -35,7 +35,8 @@ function LoginForm() {
 
   const planParam = searchParams.get('plan')
   const plan: 'basic' | 'pro' | undefined = planParam === 'basic' || planParam === 'pro' ? planParam : undefined
-  const nextPath = plan ? `/upgrade?plan=${plan}` : '/analisis'
+  const billing: 'monthly' | 'annual' = plan === 'pro' && searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'
+  const nextPath = plan ? `/upgrade?plan=${plan}${billing === 'annual' ? '&billing=annual' : ''}` : '/analisis'
 
   useEffect(() => {
     const err = searchParams.get('error')
@@ -80,7 +81,10 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setError(null)
     setGoogleLoading(true)
-    if (plan) document.cookie = `cf_pending_plan=${plan}; path=/; max-age=3600; SameSite=Lax`
+    if (plan) {
+      document.cookie = `cf_pending_plan=${plan}; path=/; max-age=3600; SameSite=Lax`
+      if (billing === 'annual') document.cookie = `cf_pending_billing=annual; path=/; max-age=3600; SameSite=Lax`
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },

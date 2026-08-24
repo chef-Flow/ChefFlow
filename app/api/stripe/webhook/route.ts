@@ -12,8 +12,9 @@ const supabaseAdmin = createClient(
 )
 
 function planFromPriceId(priceId: string): 'basic' | 'pro' | null {
-  if (priceId === process.env.STRIPE_PRICE_ID_BASIC) return 'basic'
-  if (priceId === process.env.STRIPE_PRICE_ID_PRO)   return 'pro'
+  if (priceId === process.env.STRIPE_PRICE_ID_BASIC)        return 'basic'
+  if (priceId === process.env.STRIPE_PRICE_ID_PRO)          return 'pro'
+  if (priceId === process.env.STRIPE_PRICE_ID_PRO_ANNUAL)   return 'pro'
   return null
 }
 

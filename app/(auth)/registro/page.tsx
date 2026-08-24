@@ -26,9 +26,12 @@ const PLAN_LABEL: Record<'basic' | 'pro', string> = {
 
 // Respaldo para cuando Supabase no preserva el ?next= en el redirect de
 // confirmación de correo / OAuth (ver app/auth/callback/route.ts).
-function setPendingPlanCookie(plan: 'basic' | 'pro' | undefined) {
+function setPendingPlanCookie(plan: 'basic' | 'pro' | undefined, billing: 'monthly' | 'annual') {
   if (!plan) return
   document.cookie = `cf_pending_plan=${plan}; path=/; max-age=3600; SameSite=Lax`
+  if (plan === 'pro' && billing === 'annual') {
+    document.cookie = `cf_pending_billing=annual; path=/; max-age=3600; SameSite=Lax`
+  }
 }
 
 function RegistroForm() {
@@ -36,7 +39,9 @@ function RegistroForm() {
   const searchParams = useSearchParams()
   const planParam = searchParams.get('plan')
   const plan: 'basic' | 'pro' | undefined = planParam === 'basic' || planParam === 'pro' ? planParam : undefined
-  const loginHref = plan ? `/login?plan=${plan}` : '/login'
+  const billing: 'monthly' | 'annual' = plan === 'pro' && searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'
+  const billingQS = billing === 'annual' ? '&billing=annual' : ''
+  const loginHref = plan ? `/login?plan=${plan}${billingQS}` : '/login'
 
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
@@ -53,8 +58,8 @@ function RegistroForm() {
     if (!aceptaTerminos) return
     setError(null)
     setLoading(true)
-    setPendingPlanCookie(plan)
-    const result = await signUpWithTerminos(email, password, plan)
+    setPendingPlanCookie(plan, billing)
+    const result = await signUpWithTerminos(email, password, plan, billing)
     if (!result.ok) {
       setError(result.error ?? 'Error al crear la cuenta.')
       setLoading(false)
@@ -63,7 +68,7 @@ function RegistroForm() {
     if (result.hasSession) {
       // El proyecto no exige confirmar correo — ya hay sesión activa,
       // vamos directo al checkout sin pantalla intermedia.
-      router.push(plan ? `/upgrade?plan=${plan}` : '/analisis')
+      router.push(plan ? `/upgrade?plan=${plan}${billingQS}` : '/analisis')
       return
     }
     setSuccess(true)
@@ -77,8 +82,8 @@ function RegistroForm() {
     }
     setError(null)
     setGoogleLoading(true)
-    setPendingPlanCookie(plan)
-    const next = plan ? `/upgrade?plan=${plan}` : '/analisis'
+    setPendingPlanCookie(plan, billing)
+    const next = plan ? `/upgrade?plan=${plan}${billingQS}` : '/analisis'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -101,7 +106,7 @@ function RegistroForm() {
           <h2 className="text-xl font-bold text-slate-900 mb-2">Cuenta creada</h2>
           <p className="text-slate-500 text-sm mb-6">
             Revisa tu correo para confirmar tu cuenta{plan
-              ? ` — después te llevaremos a completar el pago del Plan ${PLAN_LABEL[plan]}.`
+              ? ` — después te llevaremos a completar el pago del Plan ${PLAN_LABEL[plan]}${billing === 'annual' ? ' (anual)' : ''}.`
               : ' y luego inicia sesión.'}
           </p>
           <Link
@@ -124,7 +129,7 @@ function RegistroForm() {
               <AppLogo size={72} />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">
-              {plan ? `Crea tu cuenta — Plan ${PLAN_LABEL[plan]}` : 'Crea tu cuenta gratis'}
+              {plan ? `Crea tu cuenta — Plan ${PLAN_LABEL[plan]}${billing === 'annual' ? ' anual' : ''}` : 'Crea tu cuenta gratis'}
             </h1>
             {plan && (
               <p className="text-sm text-slate-500 mt-1.5">
@@ -211,7 +216,7 @@ function RegistroForm() {
               disabled={loading || !aceptaTerminos || googleLoading}
               className="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm mt-2"
             >
-              {loading ? 'Creando cuenta...' : plan ? `Crear cuenta — Plan ${PLAN_LABEL[plan]}` : 'Crear cuenta gratis'}
+              {loading ? 'Creando cuenta...' : plan ? `Crear cuenta — Plan ${PLAN_LABEL[plan]}${billing === 'annual' ? ' anual' : ''}` : 'Crear cuenta gratis'}
             </button>
           </form>
 

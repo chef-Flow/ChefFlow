@@ -20,6 +20,7 @@ function PlanCard({
   beneficios,
   icon: Icon,
   highlighted,
+  showAnnual,
 }: {
   planKey: 'basic' | 'pro'
   nombre: string
@@ -27,6 +28,7 @@ function PlanCard({
   beneficios: string[]
   icon: React.ElementType
   highlighted?: boolean
+  showAnnual?: boolean
 }) {
   if (highlighted) {
     return (
@@ -41,6 +43,9 @@ function PlanCard({
         <div className="mt-2 mb-4">
           <span className="text-3xl font-black text-white">{precio}</span>
           <span className="text-white/60 text-sm ml-1">MXN / mes</span>
+          {showAnnual && (
+            <div className="text-white/70 text-xs mt-1">o $7,000 MXN/año · ahorra 17%</div>
+          )}
         </div>
         <ul className="space-y-1.5 mb-5">
           {beneficios.map((b) => (
@@ -50,16 +55,30 @@ function PlanCard({
             </li>
           ))}
         </ul>
-        <form action={crearCheckoutSession}>
-          <input type="hidden" name="plan" value={planKey} />
-          <button
-            type="submit"
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-brand-600 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-colors shadow-sm"
-          >
-            <CreditCard size={14} />
-            Suscribirme por {precio}/mes
-          </button>
-        </form>
+        <div className="space-y-1.5">
+          <form action={crearCheckoutSession}>
+            <input type="hidden" name="plan" value={planKey} />
+            <button
+              type="submit"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-brand-600 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-colors shadow-sm"
+            >
+              <CreditCard size={14} />
+              Suscribirme por {precio}/mes
+            </button>
+          </form>
+          {showAnnual && (
+            <form action={crearCheckoutSession}>
+              <input type="hidden" name="plan" value={planKey} />
+              <input type="hidden" name="billing" value="annual" />
+              <button
+                type="submit"
+                className="w-full py-1.5 text-white/80 text-xs font-medium hover:text-white hover:underline transition-colors"
+              >
+                O suscribirme anual por $7,000 →
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     )
   }
@@ -139,6 +158,7 @@ export default function PaywallModal({ isOpen, onClose, requiredPlan, message, t
             precio="$699"
             icon={Crown}
             highlighted
+            showAnnual
             beneficios={
               showBothPlans
                 ? [

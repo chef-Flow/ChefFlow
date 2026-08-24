@@ -239,12 +239,20 @@ export default async function LandingPage({
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/registro?plan=pro"
-                className="block w-full text-center py-3 border-2 border-brand-600 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm"
-              >
-                Empezar
-              </Link>
+              <div className="space-y-2">
+                <Link
+                  href="/registro?plan=pro"
+                  className="block w-full text-center py-3 border-2 border-brand-600 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm"
+                >
+                  Empezar mensual
+                </Link>
+                <Link
+                  href="/registro?plan=pro&billing=annual"
+                  className="block w-full text-center py-2 text-brand-600 font-semibold text-sm hover:underline"
+                >
+                  Empezar anual — ahorra 17% →
+                </Link>
+              </div>
             </div>
 
           </div>

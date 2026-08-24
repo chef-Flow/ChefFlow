@@ -11,9 +11,12 @@ export async function crearCheckoutSession(formData: FormData): Promise<never> {
   if (!user) redirect('/login')
 
   const planSolicitado = formData.get('plan') === 'basic' ? 'basic' : 'pro'
+  const billing = formData.get('billing') === 'annual' ? 'annual' : 'monthly'
   const priceId = planSolicitado === 'basic'
     ? process.env.STRIPE_PRICE_ID_BASIC
-    : process.env.STRIPE_PRICE_ID_PRO
+    : billing === 'annual'
+      ? process.env.STRIPE_PRICE_ID_PRO_ANNUAL
+      : process.env.STRIPE_PRICE_ID_PRO
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   if (!priceId || !appUrl || !process.env.STRIPE_SECRET_KEY) {
@@ -35,11 +38,13 @@ export async function crearCheckoutSession(formData: FormData): Promise<never> {
       metadata: {
         supabase_user_id: user.id,
         plan: planSolicitado,
+        billing,
       },
       subscription_data: {
         metadata: {
           supabase_user_id: user.id,
           plan: planSolicitado,
+          billing,
         },
       },
     })

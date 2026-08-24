@@ -8,6 +8,7 @@ export async function signUpWithTerminos(
   email: string,
   password: string,
   plan?: 'basic' | 'pro',
+  billing?: 'monthly' | 'annual',
 ): Promise<{ ok: boolean; error?: string; hasSession?: boolean }> {
   const parsed = signUpSchema.safeParse({ email, password })
   if (!parsed.success) {
@@ -15,7 +16,9 @@ export async function signUpWithTerminos(
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://chefflow.mx'
-  const next = plan === 'basic' || plan === 'pro' ? `/upgrade?plan=${plan}` : '/analisis'
+  const next = plan === 'basic' || plan === 'pro'
+    ? `/upgrade?plan=${plan}${billing === 'annual' ? '&billing=annual' : ''}`
+    : '/analisis'
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({

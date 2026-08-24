@@ -12,16 +12,17 @@ const PLAN_RANK = { free: 0, basic: 1, pro: 2 } as const
 export default async function UpgradePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>
+  searchParams: Promise<{ plan?: string; billing?: string }>
 }) {
-  const { plan } = await searchParams
+  const { plan, billing: billingParam } = await searchParams
+  const billing: 'monthly' | 'annual' = plan === 'pro' && billingParam === 'annual' ? 'annual' : 'monthly'
 
   if (plan !== 'basic' && plan !== 'pro') {
     redirect('/analisis')
   }
 
   const { data: { user } } = await getUser()
-  if (!user) redirect(`/login?plan=${plan}`)
+  if (!user) redirect(`/login?plan=${plan}${billing === 'annual' ? '&billing=annual' : ''}`)
 
   const supabase = await createClient()
   const { data: profile } = await supabase
@@ -39,5 +40,6 @@ export default async function UpgradePage({
 
   const formData = new FormData()
   formData.set('plan', plan)
+  formData.set('billing', billing)
   await crearCheckoutSession(formData)
 }
