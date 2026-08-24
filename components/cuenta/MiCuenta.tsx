@@ -18,6 +18,7 @@ interface Props {
   plan: Plan
   cancelled: boolean
   subscriptionEndDate: string | null
+  checkoutError?: string | null
 }
 
 function SectionCard({
@@ -59,7 +60,7 @@ function StatusMsg({ ok, msg }: { ok: boolean; msg: string }) {
 }
 
 
-export default function MiCuenta({ email, nombre, plan, cancelled, subscriptionEndDate }: Props) {
+export default function MiCuenta({ email, nombre, plan, cancelled, subscriptionEndDate, checkoutError }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -228,6 +229,13 @@ export default function MiCuenta({ email, nombre, plan, cancelled, subscriptionE
             <p className="text-sm text-slate-400">{email}</p>
           </div>
         </div>
+
+        {checkoutError && (
+          <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <span>{checkoutError}</span>
+          </div>
+        )}
 
         <SectionCard title="Plan actual" icon={Crown}>
           <div className="space-y-3">

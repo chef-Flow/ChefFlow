@@ -4,7 +4,12 @@ import { createClient, getUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import MiCuenta from '@/components/cuenta/MiCuenta'
 
-export default async function CuentaPage() {
+export default async function CuentaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkoutError?: string }>
+}) {
+  const { checkoutError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await getUser()
   if (!user) redirect('/login')
@@ -41,6 +46,7 @@ export default async function CuentaPage() {
       plan={plan}
       cancelled={cancelled}
       subscriptionEndDate={subscriptionEndDate}
+      checkoutError={checkoutError ?? null}
     />
   )
 }

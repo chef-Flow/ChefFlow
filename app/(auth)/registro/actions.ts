@@ -8,7 +8,7 @@ export async function signUpWithTerminos(
   email: string,
   password: string,
   plan?: 'basic' | 'pro',
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; hasSession?: boolean }> {
   const parsed = signUpSchema.safeParse({ email, password })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
@@ -34,5 +34,8 @@ export async function signUpWithTerminos(
     .from('user_profiles')
     .upsert({ id: data.user.id, terminos_aceptados_at: new Date().toISOString() })
 
-  return { ok: true }
+  // Si el proyecto de Supabase no exige confirmar correo, signUp() ya deja
+  // una sesión activa (sus cookies quedaron seteadas por createClient()) y
+  // podemos mandar al usuario directo al checkout, sin pantalla intermedia.
+  return { ok: true, hasSession: !!data.session }
 }

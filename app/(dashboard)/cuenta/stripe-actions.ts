@@ -12,29 +12,48 @@ export async function crearCheckoutSession(formData: FormData): Promise<never> {
 
   const planSolicitado = formData.get('plan') === 'basic' ? 'basic' : 'pro'
   const priceId = planSolicitado === 'basic'
-    ? process.env.STRIPE_PRICE_ID_BASIC!
-    : process.env.STRIPE_PRICE_ID_PRO!
+    ? process.env.STRIPE_PRICE_ID_BASIC
+    : process.env.STRIPE_PRICE_ID_PRO
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const session = await getStripe().checkout.sessions.create({
-    mode: 'subscription',
-    payment_method_types: ['card'],
-    line_items: [{ price: priceId, quantity: 1 }],
-    customer_email: user.email,
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cuenta`,
-    metadata: {
-      supabase_user_id: user.id,
-      plan: planSolicitado,
-    },
-    subscription_data: {
+  if (!priceId || !appUrl || !process.env.STRIPE_SECRET_KEY) {
+    console.error('[crearCheckoutSession] Configuración de Stripe incompleta:', {
+      hasPriceId: !!priceId, hasAppUrl: !!appUrl, hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+    })
+    redirect(`/cuenta?checkoutError=${encodeURIComponent('No se pudo iniciar el pago. Intenta más tarde.')}`)
+  }
+
+  let sessionUrl: string | null
+  try {
+    const session = await getStripe().checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      customer_email: user.email,
+      success_url: `${appUrl}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/cuenta`,
       metadata: {
         supabase_user_id: user.id,
         plan: planSolicitado,
       },
-    },
-  })
+      subscription_data: {
+        metadata: {
+          supabase_user_id: user.id,
+          plan: planSolicitado,
+        },
+      },
+    })
+    sessionUrl = session.url
+  } catch (err) {
+    console.error('[crearCheckoutSession] Error creando la sesión de Stripe:', err)
+    redirect(`/cuenta?checkoutError=${encodeURIComponent('No se pudo iniciar el pago. Intenta más tarde.')}`)
+  }
 
-  redirect(session.url!)
+  if (!sessionUrl) {
+    redirect(`/cuenta?checkoutError=${encodeURIComponent('No se pudo iniciar el pago. Intenta más tarde.')}`)
+  }
+
+  redirect(sessionUrl)
 }
 
 export async function cancelarSuscripcion(): Promise<{ ok: boolean; error?: string }> {

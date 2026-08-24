@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import AppLogo from '@/components/ui/AppLogo'
 import { createClient } from '@/lib/supabase/client'
@@ -32,6 +32,7 @@ function setPendingPlanCookie(plan: 'basic' | 'pro' | undefined) {
 }
 
 function RegistroForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const planParam = searchParams.get('plan')
   const plan: 'basic' | 'pro' | undefined = planParam === 'basic' || planParam === 'pro' ? planParam : undefined
@@ -54,8 +55,18 @@ function RegistroForm() {
     setLoading(true)
     setPendingPlanCookie(plan)
     const result = await signUpWithTerminos(email, password, plan)
-    if (!result.ok) setError(result.error ?? 'Error al crear la cuenta.')
-    else setSuccess(true)
+    if (!result.ok) {
+      setError(result.error ?? 'Error al crear la cuenta.')
+      setLoading(false)
+      return
+    }
+    if (result.hasSession) {
+      // El proyecto no exige confirmar correo — ya hay sesión activa,
+      // vamos directo al checkout sin pantalla intermedia.
+      router.push(plan ? `/upgrade?plan=${plan}` : '/analisis')
+      return
+    }
+    setSuccess(true)
     setLoading(false)
   }
 
