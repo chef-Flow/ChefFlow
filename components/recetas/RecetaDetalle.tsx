@@ -113,6 +113,7 @@ export default function RecetaDetalle({
 
   const isLocked = false
   const canAddPhoto = plan === 'basic' || plan === 'pro'
+  const canFullPrint = plan === 'pro'
 
   const router = useRouter()
   const supabase = createClient()
@@ -402,10 +403,19 @@ export default function RecetaDetalle({
               className="flex items-center gap-2 px-3 py-1.5 border border-indigo-200 text-indigo-600 bg-indigo-50 rounded-lg text-sm hover:bg-indigo-100 transition-colors">
               <Share2 size={15} /> Compartir
             </button>
-            <button onClick={() => setShowPrintModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition-colors">
-              <Printer size={15} /> Imprimir / PDF
-            </button>
+            {canFullPrint ? (
+              <button onClick={() => setShowPrintModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                <Printer size={15} /> Imprimir / PDF
+              </button>
+            ) : (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 text-slate-300 rounded-lg text-sm cursor-not-allowed select-none"
+                title="PDF completo con opciones disponible en el plan Pro"
+              >
+                <Lock size={13} /> PDF · Plan Pro
+              </div>
+            )}
           </div>
         </div>
 

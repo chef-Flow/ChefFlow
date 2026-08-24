@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Trash2, ChefHat, Search, Printer,
-  BookOpen, ExternalLink, Layers, TrendingUp, TrendingDown,
+  BookOpen, ExternalLink, Layers, TrendingUp, TrendingDown, Lock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Modal from '@/components/ui/Modal'
@@ -37,6 +37,7 @@ interface Props {
   subRecetasDisponibles:  SubReceta[]
   margenMinimoGlobal:     number   // valor de user_profiles
   iva:                    number   // para calcular margen sin IVA
+  plan:                   'free' | 'basic' | 'pro'
 }
 
 const fmt = (v: number) =>
@@ -49,7 +50,9 @@ export default function MenuDetalle({
   subRecetasDisponibles,
   margenMinimoGlobal,
   iva,
+  plan,
 }: Props) {
+  const canFullPrint = plan === 'pro'
   const [menu, setMenu] = useState(menuInit)
   const [rows, setRows] = useState<MenuItemRow[]>(init)
 
@@ -292,10 +295,19 @@ export default function MenuDetalle({
             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
             <ArrowLeft size={16} /> Regresar a menús
           </button>
-          <button onClick={() => setShowPrintModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50">
-            <Printer size={15} /> Imprimir menú
-          </button>
+          {canFullPrint ? (
+            <button onClick={() => setShowPrintModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-sm hover:bg-slate-50">
+              <Printer size={15} /> Imprimir menú
+            </button>
+          ) : (
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 text-slate-300 rounded-lg text-sm cursor-not-allowed select-none"
+              title="PDF completo con opciones disponible en el plan Pro"
+            >
+              <Lock size={13} /> Imprimir · Plan Pro
+            </div>
+          )}
         </div>
 
         {/* Header */}

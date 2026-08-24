@@ -179,7 +179,7 @@ export default async function LandingPage({
               <div className="mb-7">
                 <h3 className="text-base font-bold text-brand-600 uppercase tracking-wide mb-3">Básico</h3>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900">$299</span>
+                  <span className="text-4xl font-extrabold text-slate-900">$349</span>
                 </div>
                 <div className="text-sm text-slate-400 mt-1">MXN / mes</div>
               </div>
@@ -190,7 +190,6 @@ export default async function LandingPage({
                   'Editar y eliminar todo',
                   'Menús ilimitados',
                   'Foto del platillo',
-                  'PDF completo con opciones',
                   'Exportar ingredientes por categoría',
                   'Alertas de precios y fechas',
                   'Margen mínimo por menú',
@@ -216,13 +215,17 @@ export default async function LandingPage({
               <div className="mb-7">
                 <h3 className="text-base font-bold text-slate-500 uppercase tracking-wide mb-3">Pro</h3>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-slate-900">$499</span>
+                  <span className="text-4xl font-extrabold text-slate-900">$699</span>
                 </div>
                 <div className="text-sm text-slate-400 mt-1">MXN / mes</div>
+                <div className="text-xs text-brand-600 font-medium mt-2">
+                  o $7,000 MXN/año (~$583/mes) · ahorra 17%
+                </div>
               </div>
               <ul className="space-y-3 mb-8">
                 {[
                   'Todo lo del plan Básico',
+                  'PDF completo con opciones',
                   'Colaboradores ilimitados',
                   'Permisos de edición por colaborador',
                   'Ajuste de precios masivo por menú',

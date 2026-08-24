@@ -37,7 +37,7 @@ export default async function MenuDetallePage({
       .order('nombre'),
 
     supabase.from('user_profiles')
-      .select('iva_porcentaje, margen_minimo')
+      .select('iva_porcentaje, margen_minimo, plan')
       .eq('id', user.id)
       .single(),
   ])
@@ -74,6 +74,7 @@ export default async function MenuDetallePage({
       subRecetasDisponibles={(subRecetasRes.data as SubReceta[]) ?? []}
       margenMinimoGlobal={profileRes.data?.margen_minimo ?? 65}
       iva={profileRes.data?.iva_porcentaje ?? 16}
+      plan={(profileRes.data?.plan ?? 'free') as 'free' | 'basic' | 'pro'}
     />
   )
 }
