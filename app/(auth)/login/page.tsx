@@ -24,6 +24,9 @@ function LoginForm() {
   const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState<string | null>(null)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [resending, setResending]       = useState(false)
+  const [resent, setResent]             = useState(false)
   const [isSignUp, setIsSignUp]         = useState(false)
   const [signUpSuccess, setSignUpSuccess] = useState(false)
   const router       = useRouter()
@@ -42,6 +45,8 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setNeedsConfirmation(false)
+    setResent(false)
     setLoading(true)
 
     if (isSignUp) {
@@ -50,11 +55,26 @@ function LoginForm() {
       else setSignUpSuccess(true)
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError('Correo o contraseña incorrectos.')
-      else { router.push(nextPath); router.refresh() }
+      if (error) {
+        if (error.message === 'Email not confirmed' || (error as { code?: string }).code === 'email_not_confirmed') {
+          setNeedsConfirmation(true)
+          setError('Tu cuenta todavía no está confirmada. Revisa tu correo (y spam) por el enlace de confirmación.')
+        } else {
+          setError('Correo o contraseña incorrectos.')
+        }
+      } else {
+        router.push(nextPath); router.refresh()
+      }
     }
 
     setLoading(false)
+  }
+
+  const handleResendConfirmation = async () => {
+    setResending(true)
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    if (!error) setResent(true)
+    setResending(false)
   }
 
   const handleGoogleSignIn = async () => {
@@ -101,6 +121,20 @@ function LoginForm() {
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
           {error}
+          {needsConfirmation && (
+            resent ? (
+              <p className="mt-2 text-green-600">Correo reenviado. Revisa tu bandeja de entrada.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resending || !email}
+                className="mt-2 block font-semibold text-red-700 underline hover:text-red-800 disabled:opacity-50"
+              >
+                {resending ? 'Reenviando...' : 'Reenviar correo de confirmación'}
+              </button>
+            )
+          )}
         </div>
       )}
 
