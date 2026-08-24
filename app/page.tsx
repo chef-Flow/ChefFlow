@@ -232,21 +232,82 @@ export default function LandingPage() {
 
       {/* Recursos extra — Whop */}
       <section className="py-20 px-4 sm:px-6 bg-slate-50">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">
-            Más recursos para tu restaurante
-          </h2>
-          <p className="text-slate-500 text-lg mb-8 leading-relaxed">
-            Contratos laborales listos para usar, ingeniería de menú y kits de operación para tu equipo — disponibles en nuestra tienda de Whop.
-          </p>
-          <a
-            href="https://whop.com/chefflow-mx/products"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block px-8 py-4 bg-slate-900 text-white font-bold text-base rounded-xl hover:bg-slate-800 transition-colors shadow-lg"
-          >
-            Ver productos en Whop →
-          </a>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">
+              Más recursos para tu restaurante
+            </h2>
+            <p className="text-slate-500 text-lg">
+              Herramientas listas para usar, disponibles en nuestra tienda de Whop.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 items-start">
+            {[
+              {
+                nombre: 'Pack de Contratos Laborales Mx',
+                precio: '$2,750',
+                nota: 'pago único',
+                features: [
+                  'Contratos conforme a la Ley Federal del Trabajo',
+                  'Archivos editables, listos para usar',
+                  'Campos personalizables para tu negocio y empleados',
+                  'Cláusulas de funciones, horarios, salario y confidencialidad',
+                  'Pensado para restaurantes y cafeterías',
+                ],
+                href: 'https://whop.com/chefflow-mx/products/pack-de-contratos-laborales-mx/',
+              },
+              {
+                nombre: 'Menú que Vende (Ingeniería de Menú)',
+                precio: '$500',
+                nota: 'pago único',
+                features: [
+                  'Identifica qué platillos potenciar',
+                  'Detecta cuáles subir de precio',
+                  'Elimina los que te hacen perder dinero',
+                  'Deja de trabajar por volumen — trabaja por margen',
+                ],
+                href: 'https://whop.com/chefflow-mx/products/menu-que-vende/',
+              },
+              {
+                nombre: 'Kits de operación para restaurantes',
+                precio: '$549',
+                nota: 'pago único',
+                features: [
+                  'Checklists por área: barra, cocina, salón, gerencia',
+                  'Protocolos claros de apertura y cierre',
+                  'Imprime y usa desde el primer día',
+                  'Evita tareas olvidadas y caos operativo',
+                ],
+                href: 'https://whop.com/chefflow-mx/products/kits-de-operacion-para-restaurantes/',
+              },
+            ].map(p => (
+              <div key={p.nombre} className="rounded-2xl border border-slate-200 p-8 bg-white flex flex-col h-full">
+                <div className="mb-7">
+                  <h3 className="text-base font-bold text-slate-900 mb-3 leading-snug min-h-[3rem]">{p.nombre}</h3>
+                  <div className="flex items-end gap-1">
+                    <span className="text-4xl font-extrabold text-slate-900">{p.precio}</span>
+                  </div>
+                  <div className="text-sm text-slate-400 mt-1">MXN / {p.nota}</div>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {p.features.map(f => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <CheckCircle2 size={15} className="text-brand-400 mt-0.5 flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={p.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center py-3 border-2 border-brand-600 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm"
+                >
+                  Ver en Whop →
+                </a>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
