@@ -57,6 +57,21 @@ export async function GET(request: NextRequest) {
   }
 
   // Destino seguro: solo rutas internas (rechaza //host y URLs absolutas)
-  const redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/analisis'
-  return NextResponse.redirect(new URL(redirectTo, baseUrl))
+  let redirectTo = next.startsWith('/') && !next.startsWith('//') ? next : '/analisis'
+
+  // Respaldo: si el ?next= no llegó (Supabase a veces ignora la query string
+  // de redirectTo/emailRedirectTo si la URL exacta no está en su lista de
+  // Redirect URLs y cae al destino por default), usamos el plan que la
+  // pantalla de registro/login guardó en una cookie antes de arrancar el
+  // login con Google o el signup por correo.
+  const pendingPlan = cookieStore.get('cf_pending_plan')?.value
+  if (redirectTo === '/analisis' && (pendingPlan === 'basic' || pendingPlan === 'pro')) {
+    redirectTo = `/upgrade?plan=${pendingPlan}`
+  }
+
+  const response = NextResponse.redirect(new URL(redirectTo, baseUrl))
+  if (pendingPlan) {
+    response.cookies.set('cf_pending_plan', '', { maxAge: 0, path: '/' })
+  }
+  return response
 }

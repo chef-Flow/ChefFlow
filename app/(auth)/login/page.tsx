@@ -80,6 +80,7 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setError(null)
     setGoogleLoading(true)
+    if (plan) document.cookie = `cf_pending_plan=${plan}; path=/; max-age=3600; SameSite=Lax`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },

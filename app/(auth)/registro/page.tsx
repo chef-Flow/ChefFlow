@@ -24,6 +24,13 @@ const PLAN_LABEL: Record<'basic' | 'pro', string> = {
   pro:   'Pro',
 }
 
+// Respaldo para cuando Supabase no preserva el ?next= en el redirect de
+// confirmación de correo / OAuth (ver app/auth/callback/route.ts).
+function setPendingPlanCookie(plan: 'basic' | 'pro' | undefined) {
+  if (!plan) return
+  document.cookie = `cf_pending_plan=${plan}; path=/; max-age=3600; SameSite=Lax`
+}
+
 function RegistroForm() {
   const searchParams = useSearchParams()
   const planParam = searchParams.get('plan')
@@ -45,6 +52,7 @@ function RegistroForm() {
     if (!aceptaTerminos) return
     setError(null)
     setLoading(true)
+    setPendingPlanCookie(plan)
     const result = await signUpWithTerminos(email, password, plan)
     if (!result.ok) setError(result.error ?? 'Error al crear la cuenta.')
     else setSuccess(true)
@@ -58,6 +66,7 @@ function RegistroForm() {
     }
     setError(null)
     setGoogleLoading(true)
+    setPendingPlanCookie(plan)
     const next = plan ? `/upgrade?plan=${plan}` : '/analisis'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
