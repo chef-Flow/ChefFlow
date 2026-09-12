@@ -83,6 +83,30 @@ export async function deleteIngredienteReceta(
   return { ok: true }
 }
 
+export async function deleteReceta(
+  receta_id: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) return { ok: false, error: 'No autenticado' }
+
+  const { error } = await supabase
+    .from('recetas')
+    .delete()
+    .eq('id', receta_id)
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('[deleteReceta]', error.code, error.message)
+    return { ok: false, error: 'No se pudo eliminar la receta. Intenta de nuevo.' }
+  }
+
+  revalidatePath('/recetas')
+  revalidatePath('/menus')
+  revalidatePath('/analisis')
+  return { ok: true }
+}
+
 export async function syncCostosReceta(
   receta_id: string,
   costo_total: number,

@@ -13,6 +13,7 @@ import {
   insertIngredienteReceta,
   updateIngredienteReceta,
   deleteIngredienteReceta,
+  deleteReceta,
   syncCostosReceta,
   saveFotoUrl,
   saveNotas,
@@ -21,6 +22,7 @@ import PrintModal from './PrintModal'
 import CompartirRecetaModal from './CompartirRecetaModal'
 import QuickIngredienteModal from './QuickIngredienteModal'
 import ComboBox from '@/components/ui/ComboBox'
+import Modal from '@/components/ui/Modal'
 import type { Ingrediente, Receta, PlataformaDelivery } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,6 +93,8 @@ export default function RecetaDetalle({
   const [addError, setAddError]       = useState<string | null>(null)
   const [showPrintModal, setShowPrintModal]       = useState(false)
   const [showShareModal, setShowShareModal]       = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting]                   = useState(false)
   const [fotoUrl, setFotoUrl]               = useState<string | null>(recetaInit.foto_url ?? null)
   const [fotoUploading, setFotoUploading]   = useState(false)
   const [fotoError, setFotoError]           = useState<string | null>(null)
@@ -388,6 +392,18 @@ export default function RecetaDetalle({
     await syncCostos(newRows)
   }
 
+  const handleDeleteReceta = async () => {
+    setDeleting(true)
+    const { ok } = await deleteReceta(receta.id)
+    if (ok) {
+      router.push('/recetas')
+      router.refresh()
+    } else {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
@@ -416,6 +432,10 @@ export default function RecetaDetalle({
                 <Lock size={13} /> PDF · Plan Pro
               </div>
             )}
+            <button onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-500 rounded-lg text-sm hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors">
+              <Trash2 size={15} /> Eliminar
+            </button>
           </div>
         </div>
 
@@ -981,6 +1001,30 @@ export default function RecetaDetalle({
           onClose={() => setShowShareModal(false)}
         />
       )}
+
+      {/* Delete confirm modal */}
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Eliminar receta" size="sm">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={18} className="text-red-500" />
+            </div>
+            <p className="text-sm text-slate-600 pt-1.5">
+              ¿Seguro que quieres eliminar <strong>{receta.nombre}</strong>? Esta acción no se puede deshacer y se quitará de cualquier menú donde esté incluida.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+              Cancelar
+            </button>
+            <button onClick={handleDeleteReceta} disabled={deleting}
+              className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50">
+              {deleting ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Quick create ingrediente */}
       {quickCreateQuery !== null && (

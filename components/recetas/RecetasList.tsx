@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Plus, BookOpen, TrendingUp, TrendingDown, ChefHat, Lock, Clock } from 'lucide-react'
+import { Plus, BookOpen, TrendingUp, TrendingDown, ChefHat, Lock, Clock, Trash2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Modal from '@/components/ui/Modal'
 import PaywallModal from '@/components/paywall/PaywallModal'
 import { useUserPlan } from '@/lib/hooks/useUserPlan'
+import { deleteReceta } from '@/app/(dashboard)/recetas/[id]/actions'
 import type { Receta, Menu } from '@/types'
 
 const fmt = (v: number) =>
@@ -30,8 +31,22 @@ export default function RecetasList({ initialRecetas, ivaDefault, margenMinimoDe
   const [porciones, setPorciones] = useState('1')
   const [menuId, setMenuId] = useState('')
   const [loading, setLoading] = useState(false)
+  const [deletingReceta, setDeletingReceta] = useState<Receta | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const plan = useUserPlan()
   const supabase = createClient()
+
+  const handleConfirmDelete = async () => {
+    if (!deletingReceta) return
+    setDeleteLoading(true)
+    const { ok } = await deleteReceta(deletingReceta.id)
+    if (ok) {
+      setRecetas(rs => rs.filter(r => r.id !== deletingReceta.id))
+      plan.refresh()
+    }
+    setDeleteLoading(false)
+    setDeletingReceta(null)
+  }
 
   const fetch = async () => {
     const { data } = await supabase.from('recetas').select('*').order('nombre')
@@ -134,10 +149,17 @@ export default function RecetasList({ initialRecetas, ivaDefault, margenMinimoDe
             const stale = isStale(r.updated_at)
 
             return (
+              <div key={r.id} className="relative group">
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeletingReceta(r) }}
+                  className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  title="Eliminar receta"
+                >
+                  <Trash2 size={14} />
+                </button>
               <Link
-                key={r.id}
                 href={`/recetas/${r.id}`}
-                className="block bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-200 transition-all group overflow-hidden"
+                className="block bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-200 transition-all overflow-hidden"
               >
                 {/* Photo thumbnail */}
                 <div className="relative w-full h-28 bg-gradient-to-br from-brand-50 to-amber-50">
@@ -203,6 +225,7 @@ export default function RecetasList({ initialRecetas, ivaDefault, margenMinimoDe
                 )}
                 </div>{/* /p-4 */}
               </Link>
+              </div>
             )
           })}
         </div>
@@ -274,6 +297,30 @@ export default function RecetasList({ initialRecetas, ivaDefault, margenMinimoDe
       </Modal>
 
       <PaywallModal isOpen={isPaywallOpen} onClose={() => setIsPaywallOpen(false)} requiredPlan="basic" tipo="receta" />
+
+      {/* Delete confirm modal */}
+      <Modal isOpen={!!deletingReceta} onClose={() => setDeletingReceta(null)} title="Eliminar receta" size="sm">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={18} className="text-red-500" />
+            </div>
+            <p className="text-sm text-slate-600 pt-1.5">
+              ¿Seguro que quieres eliminar <strong>{deletingReceta?.nombre}</strong>? Esta acción no se puede deshacer y se quitará de cualquier menú donde esté incluida.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setDeletingReceta(null)}
+              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+              Cancelar
+            </button>
+            <button onClick={handleConfirmDelete} disabled={deleteLoading}
+              className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50">
+              {deleteLoading ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
