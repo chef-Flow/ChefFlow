@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import AppLogo from '@/components/ui/AppLogo'
 import { createClient } from '@/lib/supabase/client'
+import { fbqTrack } from '@/lib/fbq'
 import { signUpWithTerminos } from './actions'
 
 function GoogleIcon() {
@@ -65,6 +66,7 @@ function RegistroForm() {
       setLoading(false)
       return
     }
+    fbqTrack('CompleteRegistration')
     if (result.hasSession) {
       // El proyecto no exige confirmar correo — ya hay sesión activa,
       // vamos directo al checkout sin pantalla intermedia.
@@ -83,6 +85,9 @@ function RegistroForm() {
     setError(null)
     setGoogleLoading(true)
     setPendingPlanCookie(plan, billing)
+    // Se dispara antes del redirect a Google (optimista) — la página se va
+    // a Google y no hay forma de esperar una confirmación del servidor.
+    fbqTrack('CompleteRegistration')
     const next = plan ? `/upgrade?plan=${plan}${billingQS}` : '/analisis'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

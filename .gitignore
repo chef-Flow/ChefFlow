@@ -30,6 +30,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local DB backups (contain user data — never commit)
+/backups/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { fbqTrack } from '@/lib/fbq'
 import AppLogo from '@/components/ui/AppLogo'
 
 function GoogleIcon() {
@@ -52,8 +53,12 @@ function LoginForm() {
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setSignUpSuccess(true)
+      if (error) {
+        setError(error.message)
+      } else {
+        fbqTrack('CompleteRegistration')
+        setSignUpSuccess(true)
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
